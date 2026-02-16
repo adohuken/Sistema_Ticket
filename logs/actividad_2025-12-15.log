@@ -1,0 +1,52 @@
+[2025-12-15 00:20:22] Usuario ID: 5 (RRHH) | Acción: Registrar Ingreso RRHH | Detalles: Ingreso: test test - Ticket #2
+[2025-12-15 03:31:17] Usuario ID: 1 (SuperAdmin) | Acción: Configuración | Detalles: Logos de actas actualizados
+[2025-12-15 04:42:00] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 5
+[2025-12-15 04:42:00] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: RRHH
+[2025-12-15 04:44:06] Usuario ID: 5 (RRHH) | Acción: Registrar Salida RRHH | Detalles: Salida: test test - Ticket #3
+[2025-12-15 05:11:50] Usuario ID: 1 (SuperAdmin) | Acción: Configuración | Detalles: Logos de actas actualizados
+[2025-12-15 15:54:32] Usuario ID: 1 (SuperAdmin) | Acción: Configuración | Detalles: Logos de actas actualizados
+[2025-12-15 16:14:05] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 1
+[2025-12-15 16:47:45] Usuario ID: 1 (SuperAdmin) | Acción: Crear Categoría | Detalles: Categoría: Hardware
+[2025-12-15 16:47:53] Usuario ID: 1 (SuperAdmin) | Acción: Crear Categoría | Detalles: Categoría: Software
+[2025-12-15 16:47:57] Usuario ID: 1 (SuperAdmin) | Acción: Crear Categoría | Detalles: Categoría: Redes
+[2025-12-15 16:48:09] Usuario ID: 1 (SuperAdmin) | Acción: Crear Categoría | Detalles: Categoría: Formulario
+[2025-12-15 16:48:21] Usuario ID: 1 (SuperAdmin) | Acción: Crear Categoría | Detalles: Categoría: Otros
+[2025-12-15 16:49:43] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 1
+[2025-12-15 18:22:47] Usuario ID: 1 (SuperAdmin) | Acción: Eliminar Usuario | Detalles: Usuario eliminado: PedroTest
+[2025-12-15 18:23:43] Usuario ID: 1 (SuperAdmin) | Acción: Crear Usuario | Detalles: Usuario: PedroTest (Empresa ID: 1)
+[2025-12-15 18:25:41] Usuario ID: 1 (SuperAdmin) | Acción: Eliminar Usuario | Detalles: Usuario eliminado: PedroTest
+[2025-12-15 18:26:09] Usuario ID: 1 (SuperAdmin) | Acción: Crear Usuario | Detalles: Usuario: PedroTest (Empresa ID: 1)
+[2025-12-15 18:33:53] Usuario ID: 7 (PedroTest) | Acción: Crear Ticket | Detalles: Ticket creado: No tengo acceso al correo
+[2025-12-15 18:35:42] Usuario ID: 7 (PedroTest) | Acción: Crear Ticket | Detalles: Ticket creado: acceso al onedrive
+[2025-12-15 18:36:13] Usuario ID: 7 (PedroTest) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc se pega
+[2025-12-15 18:36:50] Usuario ID: 7 (PedroTest) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:37:08] Usuario ID: 7 (PedroTest) | Acción: Crear Ticket | Detalles: Ticket creado: no tengo internet
+[2025-12-15 18:39:02] Usuario ID: 1 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 2 a Técnico ID: 3
+[2025-12-15 18:39:10] Usuario ID: 1 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 3 a Técnico ID: 3
+[2025-12-15 18:39:12] Usuario ID: 1 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 5 a Técnico ID: 3
+[2025-12-15 18:39:23] Usuario ID: 1 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 7 a Técnico ID: 3
+[2025-12-15 18:41:46] Usuario ID: 7 (PedroTest) | Acción: Crear Ticket | Detalles: Ticket creado: test
+[2025-12-15 18:45:31] Usuario ID: 1 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 7 a Técnico ID: 3
+[2025-12-15 18:45:38] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:45:38] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 7 - Estado actualizado a Resuelto y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:46:54] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:46:54] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 7 - Estado actualizado a Resuelto y Prioridad a Alta (Información actualizada) (Categoría actualizada) + Nota de resolución guardada
+[2025-12-15 18:48:42] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:48:42] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a Pendiente y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:48:56] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:48:56] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a En Atención y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:49:03] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:49:03] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a Cerrado y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:50:13] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:50:13] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a Cerrado y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:50:18] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:50:18] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a Cerrado y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:50:39] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:50:39] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a Cerrado y Prioridad a Alta (Información actualizada) (Categoría actualizada) + Nota de resolución guardada
+[2025-12-15 18:52:20] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:52:20] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a Cerrado y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:52:25] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:52:25] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 11 - Estado actualizado a En Atención y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 18:52:52] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: mi pc no enciende
+[2025-12-15 18:52:52] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Ticket | Detalles: Ticket ID: 19 - Estado actualizado a Cerrado y Prioridad a Alta (Información actualizada) (Categoría actualizada)
+[2025-12-15 19:45:11] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 3

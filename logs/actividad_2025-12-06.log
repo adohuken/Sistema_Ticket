@@ -1,0 +1,5 @@
+[2025-12-06 15:25:31] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 7
+[2025-12-06 15:25:31] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: Pedro Usuario
+[2025-12-06 15:28:05] Usuario ID: 7 (Pedro Usuario) | Acción: Crear Ticket | Detalles: Ticket creado: acceso al onedrive
+[2025-12-06 19:13:22] Usuario ID: 6 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: prueba del orden 
+[2025-12-06 19:13:33] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 12 a Técnico ID: 4

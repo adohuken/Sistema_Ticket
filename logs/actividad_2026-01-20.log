@@ -1,0 +1,9 @@
+[2026-01-20 09:50:44] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 7
+[2026-01-20 09:50:44] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: PedroTest
+[2026-01-20 10:39:32] Usuario ID: 7 (PedroTest) | Acción: Actualizar Ticket | Detalles: Ticket ID: 9 - Estado actualizado a Pendiente y Prioridad a Media (Información actualizada) (Categoría actualizada)
+[2026-01-20 11:35:21] Usuario ID: 7 (PedroTest) | Acción: Actualizar Ticket | Detalles: Ticket ID: 6 - Estado actualizado a Pendiente y Prioridad a Critica (Información actualizada) (Categoría actualizada)
+[2026-01-20 11:35:21] Usuario ID: 7 (PedroTest) | Acción: Actualizar Ticket | Detalles: Ticket ID: 6 - Estado actualizado a Pendiente y Prioridad a Critica (Información actualizada) (Categoría actualizada)
+[2026-01-20 13:48:01] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 1
+[2026-01-20 17:02:25] Usuario ID: 1 (SuperAdmin) | Acción: Permisos Usuario | Detalles: Actualizados permisos para ID: 7
+[2026-01-20 17:08:04] Usuario ID: 1 (SuperAdmin) | Acción: Permisos Usuario | Detalles: Actualizados permisos para ID: 7
+[2026-01-20 17:12:50] Usuario ID: 1 (SuperAdmin) | Acción: Permisos Usuario | Detalles: Actualizados permisos para ID: 7

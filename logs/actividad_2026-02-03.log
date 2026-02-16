@@ -1,0 +1,6 @@
+[2026-02-03 09:48:29] Usuario ID: 1 (SuperAdmin) | Acción: Crear Categoría | Detalles: Categoría: test
+[2026-02-03 10:09:08] Usuario ID: 1 (SuperAdmin) | Acción: Crear Usuario | Detalles: Usuario: David Abarca (Empresa ID: )
+[2026-02-03 11:43:20] Usuario ID: 1 (SuperAdmin) | Acción: Crear Usuario | Detalles: Usuario: Test Tecnico (Empresa ID: )
+[2026-02-03 11:43:39] Usuario ID: 8 (David Abarca) | Acción: Asignar Ticket | Detalles: Ticket ID: 9 a Técnico ID: 3
+[2026-02-03 11:43:49] Usuario ID: 8 (David Abarca) | Acción: Asignar Ticket | Detalles: Ticket ID: 21 a Técnico ID: 3
+[2026-02-03 11:43:56] Usuario ID: 8 (David Abarca) | Acción: Asignar Ticket | Detalles: Ticket ID: 21 a Técnico ID: 9

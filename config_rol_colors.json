@@ -1,0 +1,8 @@
+{
+    "SuperAdmin": "fuchsia",
+    "Admin": "indigo",
+    "Tecnico": "cyan",
+    "RRHH": "pink",
+    "Usuario": "black",
+    "Analista": "amber"
+}

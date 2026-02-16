@@ -1,0 +1,8 @@
+[2025-12-10 00:15:12] Usuario ID: 6 (SuperAdmin) | Acción: Configuración | Detalles: Colores de roles actualizados
+[2025-12-10 15:13:02] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 4
+[2025-12-10 15:13:02] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: Juan Técnico
+[2025-12-10 17:16:52] Usuario ID: 4 (Juan Técnico) | Acción: Crear Ticket | Detalles: Ticket creado: prueba del orden 
+[2025-12-10 17:16:52] Usuario ID: 4 (Juan Técnico) | Acción: Actualizar Ticket | Detalles: Ticket ID: 12 - Estado actualizado a Resuelto y Prioridad a Media (Información actualizada) (Categoría actualizada)
+[2025-12-10 18:10:56] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 5
+[2025-12-10 18:10:56] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: María Gerente
+[2025-12-10 23:26:02] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 4

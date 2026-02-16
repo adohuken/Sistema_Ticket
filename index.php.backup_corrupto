@@ -1,0 +1,491 @@
+exit;
+}
+
+$usuario_id = $_SESSION['usuario_id'];
+$rol_usuario = $_SESSION['usuario_rol'];
+$nombre_usuario = $_SESSION['usuario_nombre'];
+
+$mensaje_accion = '';
+
+// Procesar formularios POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Validar CSRF para todas las peticiones POST
+if (!validar_csrf_token($_POST['csrf_token'] ?? '')) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error de seguridad: Token CSRF inválido.</div>
+";
+error_log("Intento de CSRF detectado - Usuario ID: " . $usuario_id);
+} else {
+// 1. Crear Usuario
+if (isset($_POST['nombre_usuario']) && !isset($_POST['accion']) && ($rol_usuario === 'Admin' || $rol_usuario ===
+'SuperAdmin')) {
+try {
+$password_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
+$stmt = $pdo->prepare("INSERT INTO usuarios (nombre_completo, email, password, rol_id) VALUES (?, ?, ?, ?)");
+$stmt->execute([$_POST['nombre_usuario'], $_POST['email'], $password_hash, $_POST['rol']]);
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Usuario creado exitosamente.</div>";
+registrar_actividad("Crear Usuario", "Usuario creado: " . $_POST['nombre_usuario'], $pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al crear usuario: " . $e->getMessage() .
+    "</div>";
+}
+}
+
+// 2. Asignar Ticket
+if (isset($_POST['asignar_tecnico']) && ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin')) {
+try {
+$stmt = $pdo->prepare("INSERT INTO asignaciones (ticket_id, tecnico_id, asignado_por) VALUES (?, ?, ?)");
+$stmt->execute([$_POST['ticket_id'], $_POST['tecnico_id'], $usuario_id]);
+
+$stmt = $pdo->prepare("UPDATE tickets SET estado = 'En Progreso' WHERE id = ?");
+$stmt->execute([$_POST['ticket_id']]);
+
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Técnico asignado correctamente.</div>";
+registrar_actividad("Asignar Ticket", "Ticket ID: " . $_POST['ticket_id'] . " a Técnico ID: " . $_POST['tecnico_id'],
+$pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al asignar: " . $e->getMessage() . "
+</div>";
+}
+}
+
+// 3. Crear Ticket
+if (isset($_POST['titulo_ticket'])) {
+try {
+$stmt = $pdo->prepare("INSERT INTO tickets (titulo, descripcion, prioridad, categoria_id, creador_id) VALUES (?, ?, ?,
+?, ?)");
+$stmt->execute([
+$_POST['titulo_ticket'],
+$_POST['descripcion_ticket'],
+$_POST['prioridad'],
+$_POST['categoria_id'],
+$usuario_id
+]);
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Ticket creado exitosamente.</div>";
+registrar_actividad("Crear Ticket", "Ticket creado: " . $_POST['titulo_ticket'], $pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al crear ticket: " . $e->getMessage() . "
+</div>";
+}
+}
+
+// 4. Actualizar Estado Ticket
+if (isset($_POST['nuevo_estado'])) {
+try {
+$stmt = $pdo->prepare("UPDATE tickets SET estado = ? WHERE id = ?");
+$stmt->execute([$_POST['nuevo_estado'], $_POST['ticket_id']]);
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Estado actualizado.</div>";
+registrar_actividad("Actualizar Estado", "Ticket ID: " . $_POST['ticket_id'] . " a Estado: " . $_POST['nuevo_estado'],
+$pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al actualizar: " . $e->getMessage() . "
+</div>";
+}
+}
+
+// 5. Registrar Ingreso (RRHH)
+if (isset($_POST['accion']) && $_POST['accion'] === 'registrar_ingreso' && ($rol_usuario === 'RRHH' || $rol_usuario ===
+'SuperAdmin')) {
+try {
+$pdo->beginTransaction();
+
+$sql = "INSERT INTO formularios_rrhh (
+tipo, fecha_solicitud, nombre_colaborador, cedula_telefono, cargo_zona,
+disponibilidad_licencias, detalle_licencias,
+correo_nuevo, direccion_correo,
+remitente_mostrar, detalle_remitente,
+respaldo_nube, detalle_respaldo,
+reenvios_correo, detalle_reenvios,
+otras_indicaciones,
+asignacion_equipo, detalle_asignacion,
+nube_movil, detalle_nube_movil,
+equipo_usado, especificacion_equipo_usado,
+creado_por
+) VALUES (
+'Ingreso', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([
+$_POST['fecha_solicitud'],
+$_POST['nombre_colaborador'],
+$_POST['cedula_telefono'],
+$_POST['cargo_zona'],
+$_POST['disponibilidad_licencias'],
+$_POST['detalle_licencias'] ?? null,
+$_POST['correo_nuevo'],
+$_POST['direccion_correo'] ?? null,
+$_POST['remitente_mostrar'],
+$_POST['detalle_remitente'] ?? null,
+$_POST['respaldo_nube'],
+$_POST['detalle_respaldo'] ?? null,
+$_POST['reenvios_correo'],
+$_POST['detalle_reenvios'] ?? null,
+$_POST['otras_indicaciones'] ?? null,
+$_POST['asignacion_equipo'],
+$_POST['detalle_asignacion'] ?? null,
+$_POST['nube_movil'],
+$_POST['detalle_nube_movil'] ?? null,
+isset($_POST['equipo_usado']) ? 'SI' : 'NO',
+$_POST['especificacion_equipo_usado'] ?? null,
+$usuario_id
+]);
+
+$formulario_id = $pdo->lastInsertId();
+
+$stmt_cat = $pdo->query("SELECT id FROM categorias LIMIT 1");
+$categoria_id = $stmt_cat->fetchColumn();
+
+$descripcion_ticket = "SOLICITUD DE NUEVO INGRESO (RRHH)\n";
+$descripcion_ticket .= "Colaborador: " . $_POST['nombre_colaborador'] . "\n";
+$descripcion_ticket .= "Cargo: " . $_POST['cargo_zona'];
+
+$sql_ticket = "INSERT INTO tickets (titulo, descripcion, prioridad, estado, categoria_id, creador_id, fecha_creacion)
+VALUES (?, ?, 'Media', 'Abierto', ?, ?, NOW())";
+$stmt_ticket = $pdo->prepare($sql_ticket);
+$stmt_ticket->execute([
+"Nuevo Ingreso: " . $_POST['nombre_colaborador'],
+$descripcion_ticket,
+$categoria_id,
+$usuario_id
+]);
+
+$ticket_id = $pdo->lastInsertId();
+$pdo->commit();
+
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>✓ Solicitud registrada y Ticket
+    #{$ticket_id} creado exitosamente.</div>";
+registrar_actividad("Registrar Ingreso RRHH", "Ingreso: " . $_POST['nombre_colaborador'] . " - Ticket #" . $ticket_id,
+$pdo);
+} catch (PDOException $e) {
+$pdo->rollBack();
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error: " . $e->getMessage() . "</div>";
+}
+}
+
+// 6. Registrar Salida (RRHH)
+if (isset($_POST['accion']) && $_POST['accion'] === 'registrar_salida' && ($rol_usuario === 'RRHH' || $rol_usuario ===
+'SuperAdmin')) {
+try {
+$pdo->beginTransaction();
+
+$sql = "INSERT INTO formularios_rrhh (
+tipo, fecha_solicitud, nombre_colaborador, cedula_telefono, cargo_zona, fecha_efectiva,
+bloqueo_correo, cuenta_correo_bloqueo,
+respaldo_info, detalle_respaldo_salida,
+redireccion_correo, email_redireccion,
+devolucion_equipo, detalle_devolucion_equipo,
+devolucion_movil, detalle_devolucion_movil,
+observaciones, creado_por
+) VALUES (
+'Salida', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([
+$_POST['fecha_solicitud'],
+$_POST['nombre_colaborador'],
+$_POST['cedula_telefono'],
+$_POST['cargo_zona'],
+$_POST['fecha_efectiva'],
+$_POST['bloqueo_correo'],
+$_POST['cuenta_correo'] ?? null,
+$_POST['respaldo_info'],
+$_POST['detalle_respaldo_salida'] ?? null,
+$_POST['redireccion_correo'],
+$_POST['email_redireccion'] ?? null,
+$_POST['devolucion_equipo'],
+$_POST['detalle_devolucion_equipo'] ?? null,
+$_POST['devolucion_movil'],
+$_POST['detalle_devolucion_movil'] ?? null,
+$_POST['observaciones'] ?? null,
+$usuario_id
+]);
+
+$formulario_id = $pdo->lastInsertId();
+
+$stmt_cat = $pdo->query("SELECT id FROM categorias LIMIT 1");
+$categoria_id = $stmt_cat->fetchColumn();
+
+$descripcion_ticket = "SOLICITUD DE BAJA DE PERSONAL (RRHH)\n";
+$descripcion_ticket .= "Colaborador: " . $_POST['nombre_colaborador'] . "\n";
+$descripcion_ticket .= "Fecha Efectiva: " . $_POST['fecha_efectiva'];
+
+$sql_ticket = "INSERT INTO tickets (titulo, descripcion, prioridad, estado, categoria_id, creador_id, fecha_creacion)
+VALUES (?, ?, 'Alta', 'Abierto', ?, ?, NOW())";
+$stmt_ticket = $pdo->prepare($sql_ticket);
+$stmt_ticket->execute([
+"Baja de Personal: " . $_POST['nombre_colaborador'],
+$descripcion_ticket,
+$categoria_id,
+$usuario_id
+]);
+
+$ticket_id = $pdo->lastInsertId();
+$pdo->commit();
+
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>✓ Baja procesada y Ticket #{$ticket_id}
+    creado exitosamente.</div>";
+registrar_actividad("Registrar Salida RRHH", "Salida: " . $_POST['nombre_colaborador'] . " - Ticket #" . $ticket_id,
+$pdo);
+} catch (PDOException $e) {
+$pdo->rollBack();
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error: " . $e->getMessage() . "</div>";
+}
+}
+
+// 7. Gestión de Categorías
+if (isset($_POST['accion']) && ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin')) {
+// Crear Categoría
+if ($_POST['accion'] === 'crear_categoria' && !empty($_POST['nombre_categoria'])) {
+try {
+$stmt = $pdo->prepare("INSERT INTO categorias (nombre) VALUES (?)");
+$stmt->execute([$_POST['nombre_categoria']]);
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Categoría creada exitosamente.</div>";
+registrar_actividad("Crear Categoría", "Categoría: " . $_POST['nombre_categoria'], $pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error: " . $e->getMessage() . "</div>";
+}
+}
+// Eliminar Categoría
+if ($_POST['accion'] === 'eliminar_categoria' && !empty($_POST['categoria_id'])) {
+try {
+$stmt = $pdo->prepare("SELECT nombre FROM categorias WHERE id = ?");
+$stmt->execute([$_POST['categoria_id']]);
+$cat_nombre = $stmt->fetchColumn();
+
+$stmt = $pdo->prepare("DELETE FROM categorias WHERE id = ?");
+$stmt->execute([$_POST['categoria_id']]);
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Categoría eliminada.</div>";
+registrar_actividad("Eliminar Categoría", "Categoría eliminada: " . $cat_nombre, $pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error: No se puede eliminar si tiene tickets
+    asociados.</div>";
+}
+}
+}
+
+// 8. Eliminar Usuario
+if (isset($_POST['accion']) && $_POST['accion'] === 'eliminar_usuario' && ($rol_usuario === 'Admin' || $rol_usuario ===
+'SuperAdmin')) {
+if (!empty($_POST['usuario_id']) && $_POST['usuario_id'] != $usuario_id) {
+try {
+$stmt = $pdo->prepare("SELECT nombre_completo FROM usuarios WHERE id = ?");
+$stmt->execute([$_POST['usuario_id']]);
+$user_nombre = $stmt->fetchColumn();
+
+$stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
+$stmt->execute([$_POST['usuario_id']]);
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Usuario eliminado exitosamente.</div>";
+registrar_actividad("Eliminar Usuario", "Usuario eliminado: " . $user_nombre, $pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al eliminar usuario: " . $e->getMessage()
+    . "</div>";
+}
+} else {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error: No puedes eliminar tu propio usuario o
+    ID inválido.</div>";
+}
+}
+
+// 9. Editar Usuario (Actualizar)
+if (isset($_POST['accion']) && $_POST['accion'] === 'actualizar_usuario' && ($rol_usuario === 'Admin' || $rol_usuario
+=== 'SuperAdmin')) {
+try {
+$sql = "UPDATE usuarios SET nombre_completo = ?, email = ?, rol_id = ? WHERE id = ?";
+$params = [$_POST['nombre_usuario'], $_POST['email'], $_POST['rol'], $_POST['usuario_id']];
+
+// Si se proporcionó contraseña, actualizarla también
+if (!empty($_POST['password'])) {
+$sql = "UPDATE usuarios SET nombre_completo = ?, email = ?, rol_id = ?, password = ? WHERE id = ?";
+$params = [$_POST['nombre_usuario'], $_POST['email'], $_POST['rol'], password_hash($_POST['password'],
+PASSWORD_DEFAULT), $_POST['usuario_id']];
+}
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Usuario actualizado exitosamente.</div>";
+registrar_actividad("Actualizar Usuario", "Usuario actualizado: " . $_POST['nombre_usuario'], $pdo);
+} catch (PDOException $e) {
+$mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al actualizar usuario: " .
+    $e->getMessage() . "</div>";
+}
+}
+}
+}
+
+// --- CARGA DE DATOS ---
+try {
+$stmt = $pdo->query("SELECT u.id, u.nombre_completo as nombre, u.email, u.rol_id, r.nombre as rol FROM usuarios u JOIN
+roles r ON u.rol_id = r.id");
+$usuarios = $stmt->fetchAll();
+} catch (PDOException $e) {
+$usuarios = [];
+}
+
+try {
+$stmt = $pdo->query("SELECT id, nombre FROM categorias ORDER BY nombre ASC");
+$categorias = $stmt->fetchAll();
+} catch (PDOException $e) {
+$categorias = [];
+}
+
+try {
+$stmt = $pdo->query("SELECT id, nombre FROM roles");
+$roles = $stmt->fetchAll();
+} catch (PDOException $e) {
+$roles = [];
+}
+
+try {
+$sql_tickets = "SELECT t.id, t.titulo, t.descripcion, t.prioridad, t.estado, t.creador_id, c.nombre as categoria,
+(SELECT tecnico_id FROM asignaciones WHERE ticket_id = t.id ORDER BY fecha_asignacion DESC LIMIT 1) as tecnico_id
+FROM tickets t LEFT JOIN categorias c ON t.categoria_id = c.id";
+$stmt = $pdo->query($sql_tickets);
+$tickets = $stmt->fetchAll();
+} catch (PDOException $e) {
+$tickets = [];
+}
+
+try {
+$stmt = $pdo->query("SELECT * FROM formularios_rrhh ORDER BY fecha_registro DESC");
+$formularios = $stmt->fetchAll();
+} catch (PDOException $e) {
+$formularios = [];
+}
+
+// --- HTML ---
+include __DIR__ . '/contenedor_0_base.php';
+include __DIR__ . '/seccion_1_cabecera.php';
+include __DIR__ . '/seccion_2_menu_lateral.php';
+
+if (!empty($mensaje_accion)) {
+echo "<div class='ml-64 p-6'>$mensaje_accion</div>";
+}
+
+$view = $_GET['view'] ?? 'dashboard';
+
+switch ($view) {
+case 'dashboard':
+include __DIR__ . '/seccion_5_panel_inferior.php';
+break;
+
+case 'crear_ticket':
+if ($rol_usuario === 'Tecnico') {
+echo "<div class='ml-72 p-6 text-red-500 bg-red-50 border border-red-200 rounded-lg m-6'>
+    <h3 class='font-bold text-lg'><i class='ri-error-warning-line'></i> Acceso Restringido</h3>
+    <p>Los técnicos no tienen permisos para crear tickets manualmente.</p>
+</div>";
+} else {
+$mostrar_solo_ticket = true;
+include __DIR__ . '/seccion_3_formulario.php';
+}
+break;
+
+case 'editar_ticket':
+$mostrar_solo_ticket = true;
+$modo_edicion = true;
+if (isset($_GET['id'])) {
+$stmt = $pdo->prepare("SELECT * FROM tickets WHERE id = ?");
+$stmt->execute([$_GET['id']]);
+$ticket_editar = $stmt->fetch();
+if ($ticket_editar) {
+$stmt_cat = $pdo->prepare("SELECT nombre FROM categorias WHERE id = ?");
+$stmt_cat->execute([$ticket_editar['categoria_id']]);
+$ticket_editar['categoria_nombre'] = $stmt_cat->fetchColumn();
+}
+}
+include __DIR__ . '/seccion_3_formulario.php';
+break;
+
+case 'mis_tickets':
+$mostrar_solo_mis_tickets = true;
+include __DIR__ . '/seccion_4_listados.php';
+break;
+
+case 'usuarios':
+if ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin') {
+$mostrar_solo_usuario = true;
+$mostrar_solo_tabla_usuarios = true;
+include __DIR__ . '/seccion_3_formulario.php';
+include __DIR__ . '/seccion_4_listados.php';
+} else {
+echo "<div class='p-6 text-red-500'>Acceso denegado.</div>";
+}
+break;
+
+case 'editar_usuario':
+if ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin') {
+include __DIR__ . '/seccion_editar_usuario.php';
+} else {
+echo "<div class='p-6 text-red-500'>Acceso denegado.</div>";
+}
+break;
+
+case 'asignar':
+if ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin') {
+$mostrar_solo_tabla_tickets_admin = true;
+include __DIR__ . '/seccion_4_listados.php';
+} else {
+echo "<div class='p-6 text-red-500'>Acceso denegado.</div>";
+}
+break;
+
+case 'asignados':
+if ($rol_usuario === 'Tecnico') {
+$mostrar_mis_asignaciones = true;
+include __DIR__ . '/seccion_4_listados.php';
+} else {
+echo "<div class='p-6 text-red-500'>Acceso denegado.</div>";
+}
+break;
+
+case 'reportes':
+if ($rol_usuario === 'Gerencia' || $rol_usuario === 'SuperAdmin') {
+include __DIR__ . '/seccion_5_panel_inferior.php';
+}
+break;
+
+case 'ingreso':
+case 'salida':
+if ($rol_usuario === 'RRHH' || $rol_usuario === 'SuperAdmin') {
+$mostrar_listado_rrhh = true;
+include __DIR__ . '/seccion_4_listados.php';
+} else {
+echo "<div class='p-6 text-red-500'>Acceso denegado.</div>";
+}
+break;
+
+case 'formularios_rrhh':
+if ($rol_usuario === 'SuperAdmin') {
+include __DIR__ . '/seccion_formularios_rrhh.php';
+} else {
+echo "<div class='p-6 text-red-500'>Acceso denegado.</div>";
+}
+break;
+
+case 'listados':
+$mostrar_listado_general = true;
+include __DIR__ . '/seccion_4_listados.php';
+break;
+
+case 'nuevo_ingreso':
+if ($rol_usuario === 'RRHH' || $rol_usuario === 'SuperAdmin') {
+include __DIR__ . '/seccion_rrhh_ingreso.php';
+
+case 'restore':
+if ($rol_usuario === 'SuperAdmin') {
+include __DIR__ . '/restaurar_bd.php';
+}
+break;
+
+case 'restart':
+if ($rol_usuario === 'SuperAdmin') {
+include __DIR__ . '/reiniciar_bd.php';
+}
+break;
+
+default:
+echo "<div class='p-6'>Vista no encontrada.</div>";
+break;
+}
+
+include __DIR__ . '/footer.php';
+?>

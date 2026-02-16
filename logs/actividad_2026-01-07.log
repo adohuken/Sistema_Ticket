@@ -1,0 +1,10 @@
+[2026-01-07 15:10:42] Usuario ID: 1 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: esto es un test para ver como se comporta esta parte
+[2026-01-07 15:21:40] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 1
+[2026-01-07 15:21:40] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: SuperAdmin
+[2026-01-07 15:24:05] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 5
+[2026-01-07 15:24:05] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: RRHH
+[2026-01-07 15:24:53] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 5
+[2026-01-07 15:24:54] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: RRHH
+[2026-01-07 20:16:19] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 3
+[2026-01-07 20:16:19] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: JuanTest
+[2026-01-07 21:13:22] Usuario ID: 1 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 3

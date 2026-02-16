@@ -1,0 +1,15 @@
+[2025-12-05 21:24:19] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 4
+[2025-12-05 21:24:19] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: Juan Técnico
+[2025-12-05 21:24:58] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 4 a Técnico ID: 4
+[2025-12-05 21:25:01] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 5 a Técnico ID: 4
+[2025-12-05 21:25:05] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 6 a Técnico ID: 4
+[2025-12-05 21:25:08] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 7 a Técnico ID: 4
+[2025-12-05 21:25:13] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 8 a Técnico ID: 4
+[2025-12-05 21:25:16] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 9 a Técnico ID: 4
+[2025-12-05 21:53:07] Usuario ID: 4 (Juan Técnico) | Acción: Actualizar Ticket | Detalles: Ticket ID: 3 - Estado actualizado a Resuelto y Prioridad a Media + Nota de resolución guardada
+[2025-12-05 22:29:48] Usuario ID: 4 (Juan Técnico) | Acción: Actualizar Ticket | Detalles: Ticket ID: 7 - Estado actualizado a Resuelto y Prioridad a Baja + Nota de resolución guardada
+[2025-12-05 23:10:50] Usuario ID: 6 (SuperAdmin) | Acción: Crear Ticket | Detalles: Ticket creado: este es una prueba para ver como se visualiza
+[2025-12-05 23:11:32] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 1
+[2025-12-05 23:12:04] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 10 a Técnico ID: 4
+[2025-12-05 23:15:48] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 8
+[2025-12-05 23:15:48] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: Recursos Humanos

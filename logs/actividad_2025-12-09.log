@@ -1,0 +1,7 @@
+[2025-12-09 16:06:10] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario ID: 8
+[2025-12-09 16:06:10] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Usuario | Detalles: Usuario actualizado: Recursos Humanos
+[2025-12-09 22:00:37] Usuario ID: 6 (SuperAdmin) | Acción: Asignar Ticket | Detalles: Ticket ID: 4 a Técnico ID: 4
+[2025-12-09 22:01:48] Usuario ID: 4 (Juan Técnico) | Acción: Actualizar Ticket | Detalles: Ticket ID: 4 - Estado actualizado a Resuelto y Prioridad a Alta
+[2025-12-09 22:06:39] Usuario ID: 4 (Juan Técnico) | Acción: Actualizar Ticket | Detalles: Ticket ID: 4 - Estado actualizado a Resuelto y Prioridad a Alta
+[2025-12-09 22:34:35] Usuario ID: 8 (Recursos Humanos) | Acción: Registrar Ingreso RRHH | Detalles: Ingreso: Bryan Rivas - Ticket #13
+[2025-12-09 23:29:24] Usuario ID: 6 (SuperAdmin) | Acción: Actualizar Permisos | Detalles: Permisos actualizados para rol ID: 5
