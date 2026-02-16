@@ -19,6 +19,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: htdocs/
           protocol: ftp
+          port: 21
+          security: loose
           log-level: verbose
           exclude: |
             **/.git*
