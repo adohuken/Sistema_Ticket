@@ -104,6 +104,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // --- FIN AUDITORÍA ---
 
+        // --- INICIO LÓGICA DE TRIGGER "registrar_cambio_personal" ---
+        // Reemplazo del Trigger de BD para compatibilidad con hostings compartidos
+        $trigger_fields = ['empresa_id', 'sucursal_id', 'cargo', 'salario'];
+        $cambios_trigger = [];
+        foreach ($trigger_fields as $field) {
+            $val_old = $empleado[$field] ?? null;
+            $val_new = $_POST[$field] ?? null;
+            if (trim((string)$val_old) !== trim((string)$val_new)) {
+                $cambios_trigger[] = $field;
+            }
+        }
+
+        if (!empty($cambios_trigger)) {
+            $stmt_hist = $pdo->prepare("INSERT INTO personal_historial 
+                (personal_id, tipo_cambio, descripcion, 
+                empresa_anterior_id, sucursal_anterior_id, cargo_anterior, salario_anterior,
+                empresa_nueva_id, sucursal_nueva_id, cargo_nuevo, salario_nuevo,
+                fecha_efectiva, registrado_por) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?)");
+            
+            $descripcion_cambio = "Actualización de: " . implode(", ", $cambios_trigger);
+
+            $stmt_hist->execute([
+                $personal_id,
+                'Actualización', // tipo_cambio
+                $descripcion_cambio,
+                $empleado['empresa_id'],
+                $empleado['sucursal_id'],
+                $empleado['cargo'],
+                $empleado['salario'],
+                $_POST['empresa_id'],
+                $_POST['sucursal_id'],
+                $_POST['cargo'],
+                $_POST['salario'] ?? 0, // salario podría no venir en el POST si no se muestra en el form, ajustar según necesidad
+                $usuario_id
+            ]);
+        }
+        // --- FIN LÓGICA DE TRIGGER ---
+
         // Actualizar
         $sql = "UPDATE personal SET 
             empresa_id = ?, sucursal_id = ?, codigo_empleado = ?, nombres = ?, apellidos = ?,

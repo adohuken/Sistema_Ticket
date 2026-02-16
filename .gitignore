@@ -1,0 +1,10 @@
+vendor/
+node_modules/
+.env
+.vscode/
+.idea/
+*.log
+test_ftp_connection.php
+export_db_no_triggers.php
+sistema_ticket_backup_*.sql
+db_limpia.sql
