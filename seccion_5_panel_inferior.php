@@ -6,6 +6,31 @@
 // Este archivo se incluye desde index.php, donde ya están definidas las variables:
 // $rol_usuario, $usuario_id, $pdo, $tickets
 
+// $rol_usuario, $usuario_id, $pdo, $tickets
+
+?>
+<style>
+    /* Custom Scrollbar for Kanban Columns */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+</style>
+<?php
+
 echo '<div class="p-3">';
 
 // -------------------------------------------------------------------------
@@ -111,564 +136,452 @@ if ($rol_usuario === 'Admin') {
     });
     ?>
 
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <i class="ri-dashboard-line text-indigo-600"></i> Panel de Administración
-        </h2>
-        <a href="index.php?view=usuarios"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-colors flex items-center gap-2">
-            <i class="ri-user-settings-line"></i> Gestionar Usuarios
-        </a>
-    </div>
+    <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <a href="index.php?view=listados" class="block">
+        <!-- COLUMNA IZQUIERDA: Acciones + Stats (1/4) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-5 overflow-y-auto custom-scrollbar pb-4">
+
+            <!-- Acciones Rápidas -->
             <div
-                class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm font-medium">Total Tickets</p>
-                        <p class="text-3xl font-bold mt-2"><?= $total_tickets ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-ticket-line text-2xl"></i>
-                    </div>
+                class="bg-gradient-to-br from-indigo-700 to-violet-900 rounded-2xl p-5 shadow-xl text-white relative overflow-hidden shrink-0">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -mr-10 -mb-10"></div>
+                <div class="flex items-center gap-2 mb-4 relative z-10">
+                    <i class="ri-dashboard-line text-indigo-300"></i>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-200">Panel de Admin</h3>
                 </div>
-            </div>
-        </a>
-        <a href="index.php?view=listados&filter=abiertos" class="block">
-            <div
-                class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-yellow-100 text-sm font-medium">Pendientes</p>
-                        <p class="text-3xl font-bold mt-2"><?= $tickets_abiertos ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-inbox-line text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-        <a href="index.php?view=listados&filter=asignado" class="block">
-            <div
-                class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Asignados</p>
-                        <p class="text-3xl font-bold mt-2"><?= $tickets_en_proceso ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-loader-line text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-        <a href="index.php?view=listados&filter=completo" class="block">
-            <div
-                class="bg-gradient-to-br from-green-500 to-green-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-green-100 text-sm font-medium">Completos</p>
-                        <p class="text-3xl font-bold mt-2"><?= $tickets_resueltos ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-checkbox-circle-line text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- [NEW] Contenedor Interactivo: Estadísticas por Sede y Empresa -->
-    <details class="group mb-8 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden" open>
-        <summary
-            class="flex items-center justify-between p-4 cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors select-none">
-            <h3 class="text-lg font-bold text-slate-700 flex items-center gap-2">
-                <i class="ri-building-2-line text-indigo-500"></i> Estadísticas por Sede y Empresa
-            </h3>
-            <span class="transform transition-transform group-open:rotate-180 text-slate-400">
-                <i class="ri-arrow-down-s-line text-2xl"></i>
-            </span>
-        </summary>
-
-        <div class="p-6 border-t border-slate-100 bg-white">
-
-            <!-- 1. Por País/Sede -->
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Por País / Sede</h4>
-            <!-- [MOD] Grid más denso (cols-5) para tarjetas más pequeñas -->
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
-                <a href="index.php?view=listados&filter=pais_nicaragua"
-                    class="block transform hover:scale-[1.02] transition-all">
-                    <!-- [MOD] Padding reducido (p-3) -->
-                    <div
-                        class="bg-gradient-to-br from-cyan-500 to-blue-600 text-white p-3 rounded-xl shadow-sm hover:shadow-md relative overflow-hidden group/card h-full">
+                <div class="flex flex-col gap-2 relative z-10">
+                    <a href="index.php?view=usuarios"
+                        class="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
                         <div
-                            class="absolute right-0 top-0 h-full w-24 bg-white/10 skew-x-12 transform translate-x-12 group-hover/card:translate-x-6 transition-transform">
+                            class="w-7 h-7 rounded-lg bg-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ri-user-settings-line text-sm"></i>
                         </div>
-                        <div class="relative z-10 flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-blue-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Sede</p>
-                                <!-- [MOD] Texto más pequeño (text-sm) -->
-                                <h3 class="text-sm font-bold text-white leading-tight">Nicaragua</h3>
-                                <div class="mt-1 flex items-baseline gap-1">
-                                    <!-- [MOD] Número más pequeño (text-2xl) -->
-                                    <span class="text-2xl font-black text-white"><?= $tickets_nicaragua ?></span>
-                                    <span class="text-[10px] text-blue-100">tickets</span>
-                                </div>
-                            </div>
-                            <!-- [MOD] Icono más pequeño (p-2, text-xl) -->
-                            <div
-                                class="bg-white/20 p-2 rounded-full backdrop-blur-sm shadow-inner flex-shrink-0 w-10 h-10 flex items-center justify-center">
-                                <i class="ri-map-pin-2-line text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-
-
-
-                <a href="index.php?view=listados&filter=pais_honduras"
-                    class="block transform hover:scale-[1.02] transition-all">
-                    <div
-                        class="bg-gradient-to-br from-fuchsia-500 to-purple-600 text-white p-3 rounded-xl shadow-sm hover:shadow-md relative overflow-hidden group/card h-full">
+                        <span class="font-medium text-sm">Gestionar Usuarios</span>
+                    </a>
+                    <a href="index.php?view=listados"
+                        class="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
                         <div
-                            class="absolute right-0 top-0 h-full w-24 bg-white/10 skew-x-12 transform translate-x-12 group-hover/card:translate-x-6 transition-transform">
+                            class="w-7 h-7 rounded-lg bg-violet-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ri-list-check text-sm"></i>
                         </div>
-                        <div class="relative z-10 flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-purple-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Sede</p>
-                                <h3 class="text-sm font-bold text-white leading-tight">Honduras</h3>
-                                <div class="mt-1 flex items-baseline gap-1">
-                                    <span class="text-2xl font-black text-white"><?= $tickets_honduras ?></span>
-                                    <span class="text-[10px] text-purple-100">tickets</span>
-                                </div>
-                            </div>
-                            <div
-                                class="bg-white/20 p-2 rounded-full backdrop-blur-sm shadow-inner flex-shrink-0 w-10 h-10 flex items-center justify-center">
-                                <i class="ri-global-line text-xl"></i>
-                            </div>
+                        <span class="font-medium text-sm">Todos los Tickets</span>
+                    </a>
+                    <a href="index.php?view=listados&filter=abiertos"
+                        class="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ri-inbox-line text-sm"></i>
                         </div>
-                    </div>
-                </a>
-
-                <!-- [NEW] Tickets de Hoy -->
-                <div class="block transform hover:scale-[1.02] transition-all cursor-default">
-                    <div
-                        class="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-3 rounded-xl shadow-sm relative overflow-hidden h-full">
-                        <div class="absolute right-0 top-0 h-full w-24 bg-white/10 skew-x-12 transform translate-x-12">
+                        <span class="font-medium text-sm">Sin Asignar</span>
+                    </a>
+                    <a href="index.php?view=listados&filter=prioridad_alta"
+                        class="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-7 h-7 rounded-lg bg-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ri-alarm-warning-line text-sm"></i>
                         </div>
-                        <div class="relative z-10 flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Actividad
-                                </p>
-                                <h3 class="text-sm font-bold text-white leading-tight">Creados Hoy</h3>
-                                <div class="mt-1 flex items-baseline gap-1">
-                                    <span class="text-2xl font-black text-white"><?= $tickets_hoy ?></span>
-                                    <span class="text-[10px] text-emerald-100">nuevos</span>
-                                </div>
-                            </div>
-                            <div
-                                class="bg-white/20 p-2 rounded-full backdrop-blur-sm shadow-inner flex-shrink-0 w-10 h-10 flex items-center justify-center">
-                                <i class="ri-calendar-event-line text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
+                        <span class="font-medium text-sm">Tickets Críticos</span>
+                    </a>
                 </div>
-
-                <!-- [NEW] Sin Técnico (Por Asignar) -->
-                <a href="index.php?view=listados&filter=abiertos" class="block transform hover:scale-[1.02] transition-all">
-                    <div
-                        class="bg-gradient-to-br from-amber-400 to-orange-500 text-white p-3 rounded-xl shadow-sm hover:shadow-md relative overflow-hidden h-full">
-                        <div
-                            class="absolute right-0 top-0 h-full w-24 bg-white/10 skew-x-12 transform translate-x-12 group-hover:translate-x-6 transition-transform">
-                        </div>
-                        <div class="relative z-10 flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-amber-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Atención</p>
-                                <h3 class="text-sm font-bold text-white leading-tight">Sin Técnico</h3>
-                                <div class="mt-1 flex items-baseline gap-1">
-                                    <span class="text-2xl font-black text-white"><?= $tickets_sin_asignar_tecnico ?></span>
-                                    <span class="text-[10px] text-amber-100">pendientes</span>
-                                </div>
-                            </div>
-                            <div
-                                class="bg-white/20 p-2 rounded-full backdrop-blur-sm shadow-inner flex-shrink-0 w-10 h-10 flex items-center justify-center">
-                                <i class="ri-user-unfollow-line text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-
-                <!-- [NEW] Tickets Críticos -->
-                <a href="index.php?view=listados&filter=prioridad_alta"
-                    class="block transform hover:scale-[1.02] transition-all">
-                    <div
-                        class="bg-gradient-to-br from-rose-500 to-pink-600 text-white p-3 rounded-xl shadow-sm hover:shadow-md relative overflow-hidden h-full">
-                        <div
-                            class="absolute right-0 top-0 h-full w-24 bg-white/10 skew-x-12 transform translate-x-12 group-hover:translate-x-6 transition-transform">
-                        </div>
-                        <div class="relative z-10 flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-rose-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Urgente</p>
-                                <h3 class="text-sm font-bold text-white leading-tight">Críticos</h3>
-                                <div class="mt-1 flex items-baseline gap-1">
-                                    <span class="text-2xl font-black text-white"><?= $tickets_criticos ?></span>
-                                    <span class="text-[10px] text-rose-100">activos</span>
-                                </div>
-                            </div>
-                            <div
-                                class="bg-white/20 p-2 rounded-full backdrop-blur-sm shadow-inner flex-shrink-0 w-10 h-10 flex items-center justify-center">
-                                <i class="ri-alarm-warning-line text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </a>
             </div>
 
-
-        </div>
-
-        <!-- 2. Por Empresa -->
-        <?php if (!empty($stats_empresas)): ?>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-t border-slate-100 pt-6">Por
-                Empresa</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <?php
-                $colores_empresas = ['bg-pink-500', 'bg-amber-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-cyan-500'];
-                $i = 0;
-                foreach ($stats_empresas as $id_emp => $data):
-                    // Cambiamos a diseño "tarjeta con lista" (Card view)
-                    // Usaremos un color sólido de encabezado y lista blanca
-                    $color_header = $colores_empresas[$i % count($colores_empresas)];
-                    $i++;
-                    ?>
-                    <div
-                        class="rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col bg-white">
-                        <!-- Header: Nombre Empresa y Total -->
-                        <a href="index.php?view=listados&filter=empresa_<?= $id_emp ?>"
-                            class="<?= $color_header ?> p-4 flex justify-between items-center text-white cursor-pointer hover:opacity-90 transition-opacity">
-                            <div>
-                                <div class="text-[10px] uppercase font-bold opacity-80 mb-0.5">Empresa</div>
-                                <h3 class="font-bold text-lg leading-tight truncate w-full"
-                                    title="<?= htmlspecialchars($data['nombre']) ?>">
-                                    <?= htmlspecialchars($data['nombre']) ?>
-                                </h3>
-                            </div>
-                            <div class="bg-white/20 px-3 py-1 rounded-lg text-xl font-black backdrop-blur-sm">
-                                <?= $data['total'] ?>
-                            </div>
-                        </a>
-
-                        <!-- Body: Sucursales (Lista) -->
-                        <div class="p-3 bg-slate-50/50 flex-1">
-                            <?php if (!empty($data['sucursales'])): ?>
-                                <div class="flex flex-col gap-2">
-                                    <?php
-                                    // Ordenar sucursales por cantidad (Desc)
-                                    arsort($data['sucursales']);
-                                    foreach ($data['sucursales'] as $suc => $cant):
-                                        ?>
-                                        <div
-                                            class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-100 text-sm">
-                                            <div class="flex items-center gap-2 overflow-hidden">
-                                                <i class="ri-store-2-line text-slate-400"></i>
-                                                <span class="font-medium text-slate-600 truncate" title="<?= htmlspecialchars($suc) ?>">
-                                                    <?= htmlspecialchars($suc) ?>
-                                                </span>
-                                            </div>
-                                            <span
-                                                class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full border border-slate-200">
-                                                <?= $cant ?>
-                                            </span>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="h-full flex flex-col items-center justify-center text-slate-300 py-4">
-                                    <i class="ri-building-2-line text-2xl mb-1"></i>
-                                    <span class="text-xs">Sin actividad reciente</span>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Footer: Acción -->
-                        <a href="index.php?view=listados&filter=empresa_<?= $id_emp ?>"
-                            class="p-2 text-center text-xs font-medium text-indigo-500 hover:bg-indigo-50 transition-colors border-t border-slate-100">
-                            Ver todos los tickets <i class="ri-arrow-right-line ml-1 align-bottom"></i>
-                        </a>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
-        </div>
-    </details>
-
-    <!-- Módulo: Mis Tareas Asignadas (Para Admin) -->
-    <?php
-    // Filtramos los tickets asignados a este admin específico
-    $mis_tickets_admin = array_filter($tickets, function ($t) use ($usuario_id) {
-        return $t['tecnico_id'] == $usuario_id && $t['estado'] !== 'Completo';
-    }); // Admin Assigned: Exclude Completed
-
-    if (!empty($mis_tickets_admin)):
-        ?>
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-blue-100">
-            <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100">
-                <h3 class="text-lg font-bold text-blue-800 flex items-center gap-2">
-                    <i class="ri-checkbox-multiple-line text-blue-600"></i> Tickets Asignados
+            <!-- Stats Principales -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm shrink-0">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i class="ri-bar-chart-2-line text-indigo-500"></i> Resumen General
                 </h3>
+                <div class="space-y-2">
+                    <a href="index.php?view=listados"
+                        class="flex items-center justify-between p-2.5 bg-blue-50 rounded-xl border border-blue-100 hover:border-blue-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-ticket-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Total</span>
+                        </div>
+                        <span class="text-lg font-bold text-blue-600"><?= $total_tickets ?></span>
+                    </a>
+                    <a href="index.php?view=listados&filter=abiertos"
+                        class="flex items-center justify-between p-2.5 bg-yellow-50 rounded-xl border border-yellow-100 hover:border-yellow-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-yellow-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-inbox-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Pendientes</span>
+                        </div>
+                        <span class="text-lg font-bold text-yellow-600"><?= $tickets_abiertos ?></span>
+                    </a>
+                    <a href="index.php?view=listados&filter=asignado"
+                        class="flex items-center justify-between p-2.5 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-loader-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Asignados</span>
+                        </div>
+                        <span class="text-lg font-bold text-purple-600"><?= $tickets_en_proceso ?></span>
+                    </a>
+                    <a href="index.php?view=listados&filter=completo"
+                        class="flex items-center justify-between p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 hover:border-emerald-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-checkbox-circle-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Completos</span>
+                        </div>
+                        <span class="text-lg font-bold text-emerald-600"><?= $tickets_resueltos ?></span>
+                    </a>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-blue-50">
-                    <tbody class="bg-white divide-y divide-blue-50">
-                        <?php foreach ($mis_tickets_admin as $t):
-                            // [NEW] Filtro: Excluir tickets completados de esta vista
-                            if (in_array($t['estado'], ['Completo', 'Resuelto', 'Cerrado']))
-                                continue;
 
-                            $prio_colors = [
-                                'Baja' => 'bg-emerald-100 text-emerald-700',
-                                'Media' => 'bg-amber-100 text-amber-700',
-                                'Alta' => 'bg-orange-100 text-orange-700',
-                                'Critica' => 'bg-rose-100 text-rose-700'
-                            ];
-                            $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-100 text-slate-700';
+            <!-- Stats Adicionales -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm shrink-0">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i class="ri-pulse-line text-rose-500"></i> Alertas y Actividad
+                </h3>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between p-2.5 bg-teal-50 rounded-xl border border-teal-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
+                                <i class="ri-calendar-event-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Creados Hoy</span>
+                        </div>
+                        <span class="text-lg font-bold text-teal-600"><?= $tickets_hoy ?></span>
+                    </div>
+                    <a href="index.php?view=listados&filter=abiertos"
+                        class="flex items-center justify-between p-2.5 bg-amber-50 rounded-xl border border-amber-100 hover:border-amber-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-user-unfollow-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Sin Técnico</span>
+                        </div>
+                        <span class="text-lg font-bold text-amber-600"><?= $tickets_sin_asignar_tecnico ?></span>
+                    </a>
+                    <a href="index.php?view=listados&filter=prioridad_alta"
+                        class="flex items-center justify-between p-2.5 bg-rose-50 rounded-xl border border-rose-100 hover:border-rose-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-alarm-warning-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Críticos</span>
+                        </div>
+                        <span class="text-lg font-bold text-rose-600"><?= $tickets_criticos ?></span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Por País -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm shrink-0">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i class="ri-map-pin-2-line text-cyan-500"></i> Por País / Sede
+                </h3>
+                <div class="space-y-2">
+                    <a href="index.php?view=listados&filter=pais_nicaragua"
+                        class="flex items-center justify-between p-2.5 bg-cyan-50 rounded-xl border border-cyan-100 hover:border-cyan-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-map-pin-2-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Nicaragua</span>
+                        </div>
+                        <span class="text-lg font-bold text-cyan-600"><?= $tickets_nicaragua ?></span>
+                    </a>
+                    <a href="index.php?view=listados&filter=pais_honduras"
+                        class="flex items-center justify-between p-2.5 bg-fuchsia-50 rounded-xl border border-fuchsia-100 hover:border-fuchsia-300 hover:shadow-sm transition-all group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-global-line text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Honduras</span>
+                        </div>
+                        <span class="text-lg font-bold text-fuchsia-600"><?= $tickets_honduras ?></span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Por Empresa -->
+            <?php if (!empty($stats_empresas)): ?>
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm shrink-0">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="ri-building-2-line text-indigo-500"></i> Por Empresa
+                    </h3>
+                    <div class="space-y-2">
+                        <?php
+                        $colores_empresas_left = [
+                            ['bg' => 'bg-pink-50', 'border' => 'border-pink-100', 'hover' => 'hover:border-pink-300', 'icon' => 'bg-pink-500', 'text' => 'text-pink-600'],
+                            ['bg' => 'bg-amber-50', 'border' => 'border-amber-100', 'hover' => 'hover:border-amber-300', 'icon' => 'bg-amber-500', 'text' => 'text-amber-600'],
+                            ['bg' => 'bg-emerald-50', 'border' => 'border-emerald-100', 'hover' => 'hover:border-emerald-300', 'icon' => 'bg-emerald-500', 'text' => 'text-emerald-600'],
+                            ['bg' => 'bg-indigo-50', 'border' => 'border-indigo-100', 'hover' => 'hover:border-indigo-300', 'icon' => 'bg-indigo-500', 'text' => 'text-indigo-600'],
+                            ['bg' => 'bg-cyan-50', 'border' => 'border-cyan-100', 'hover' => 'hover:border-cyan-300', 'icon' => 'bg-cyan-500', 'text' => 'text-cyan-600'],
+                        ];
+                        $ei = 0;
+                        foreach ($stats_empresas as $id_emp => $data):
+                            $ec = $colores_empresas_left[$ei % count($colores_empresas_left)];
+                            $ei++;
                             ?>
-                            // Lógica de Resaltado (Global)
-                            $row_class = 'hover:bg-blue-50/50 cursor-pointer transition-colors group'; // Clase por defecto
-                            if (stripos($t['titulo'], 'Nuevo Ingreso') !== false) {
-                            $row_class = 'bg-emerald-50 hover:bg-emerald-100 transition-colors group border-l-4 border-emerald-400';
-                            } elseif (stripos($t['titulo'], 'Baja de Personal') !== false) {
-                            $row_class = 'bg-rose-50 hover:bg-rose-100 transition-colors group border-l-4 border-rose-400';
-                            }
-                            ?>
-                            <tr class='<?= $row_class ?>'
-                                onclick="window.location.href='index.php?view=editar_ticket&id=<?= $t['id'] ?>'">
-                                <td class='px-6 py-4 text-sm font-bold text-blue-600'>
-                                    #<?= str_pad($t['id'], 4, '0', STR_PAD_LEFT) ?></td>
-                                <td class='px-6 py-4'>
-                                    <div class='text-sm font-semibold text-slate-800'><?= htmlspecialchars($t['titulo']) ?></div>
-                                    <div class='text-xs text-slate-500 mt-0.5'>
-                                        <?= htmlspecialchars(substr($t['descripcion'], 0, 50)) ?>...
+                            <a href="index.php?view=listados&filter=empresa_<?= $id_emp ?>"
+                                class="flex items-center justify-between p-2.5 <?= $ec['bg'] ?> rounded-xl border <?= $ec['border'] ?> <?= $ec['hover'] ?> hover:shadow-sm transition-all group">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <div
+                                        class="w-7 h-7 rounded-lg <?= $ec['icon'] ?> flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                                        <i class="ri-building-2-line text-white text-xs"></i>
                                     </div>
-                                </td>
-                                <td class='px-6 py-4'><span
-                                        class='px-2.5 py-1 rounded-lg text-xs font-semibold <?= $p_class ?>'><?= htmlspecialchars($t['prioridad']) ?></span>
-                                </td>
-                                <td class='px-6 py-4 text-sm text-slate-500'><?= htmlspecialchars($t['categoria']) ?></td>
-                            </tr>
+                                    <span class="text-sm font-semibold text-slate-700 truncate"
+                                        title="<?= htmlspecialchars($data['nombre']) ?>"><?= htmlspecialchars($data['nombre']) ?></span>
+                                </div>
+                                <span class="text-lg font-bold <?= $ec['text'] ?> shrink-0 ml-1"><?= $data['total'] ?></span>
+                            </a>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: Perfil + Tabla (3/4) -->
+        <div
+            class="w-full lg:w-3/4 bg-slate-100/50 rounded-3xl p-6 border border-slate-200 overflow-hidden flex flex-col gap-5">
+
+            <!-- Tarjeta de Perfil Admin -->
+            <div
+                class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-sm relative overflow-hidden group shrink-0">
+                <div
+                    class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl group-hover:bg-indigo-500/20 transition-all">
+                </div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/30">
+                            <?= strtoupper(substr($GLOBALS['nombre_usuario'], 0, 1)) ?>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-0.5">
+                                Hola, <?= htmlspecialchars(explode(' ', $GLOBALS['nombre_usuario'])[0]) ?>
+                            </h2>
+                            <p class="text-slate-500 text-sm flex items-center gap-1">
+                                <i class="ri-shield-star-line text-indigo-500"></i> Panel de Administración
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 flex-wrap">
+                        <div class="bg-blue-50 rounded-xl p-3 border border-blue-100 text-center min-w-[80px]">
+                            <span class="block text-2xl font-bold text-blue-600"><?= $total_tickets ?></span>
+                            <span class="text-[10px] uppercase font-bold text-blue-400">Total</span>
+                        </div>
+                        <div class="bg-yellow-50 rounded-xl p-3 border border-yellow-100 text-center min-w-[80px]">
+                            <span class="block text-2xl font-bold text-yellow-600"><?= $tickets_abiertos ?></span>
+                            <span class="text-[10px] uppercase font-bold text-yellow-400">Pendientes</span>
+                        </div>
+                        <div class="bg-rose-50 rounded-xl p-3 border border-rose-100 text-center min-w-[80px]">
+                            <span class="block text-2xl font-bold text-rose-600"><?= $tickets_criticos ?></span>
+                            <span class="text-[10px] uppercase font-bold text-rose-400">Críticos</span>
+                        </div>
+                        <div class="bg-teal-50 rounded-xl p-3 border border-teal-100 text-center min-w-[80px]">
+                            <span class="block text-2xl font-bold text-teal-600"><?= $tickets_hoy ?></span>
+                            <span class="text-[10px] uppercase font-bold text-teal-400">Hoy</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    <?php endif; ?>
 
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <i class="ri-list-check text-indigo-600"></i> Tickets Recientes
-            </h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Asunto
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Solicitante</th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Prioridad
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Estado
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Categoría
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <?php
-                    if (empty($tickets)) {
-                        echo "<tr><td colspan='8' class='px-6 py-8 text-center text-gray-500'>No hay tickets registrados.</td></tr>";
-                    } else {
-                        // [NEW] Filtrar tickets (Ya no excluimos completados, solo ordenamos)
-                        $tickets_listar = $tickets;
+            <!-- Mis Tickets Asignados (si los hay) -->
+            <?php
+            $mis_tickets_admin = array_filter($tickets, function ($t) use ($usuario_id) {
+                return $t['tecnico_id'] == $usuario_id && !in_array($t['estado'], ['Completo', 'Resuelto', 'Cerrado']);
+            });
+            if (!empty($mis_tickets_admin)):
+                ?>
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl overflow-hidden shrink-0">
+                    <div
+                        class="px-5 py-3 bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200 flex items-center gap-2">
+                        <i class="ri-checkbox-multiple-line text-blue-600"></i>
+                        <h3 class="text-sm font-bold text-blue-800">Mis Tickets Asignados</h3>
+                        <span
+                            class="ml-auto bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full"><?= count($mis_tickets_admin) ?></span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-blue-100">
+                            <tbody class="bg-white divide-y divide-blue-50">
+                                <?php foreach ($mis_tickets_admin as $t):
+                                    $prio_colors = ['Baja' => 'bg-emerald-100 text-emerald-700', 'Media' => 'bg-amber-100 text-amber-700', 'Alta' => 'bg-orange-100 text-orange-700', 'Critica' => 'bg-rose-100 text-rose-700'];
+                                    $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-100 text-slate-700';
+                                    $row_class = 'hover:bg-blue-50/50 cursor-pointer transition-colors';
+                                    if (stripos($t['titulo'], 'Nuevo Ingreso') !== false)
+                                        $row_class = 'bg-emerald-50 hover:bg-emerald-100 transition-colors border-l-4 border-emerald-400';
+                                    elseif (stripos($t['titulo'], 'Baja de Personal') !== false)
+                                        $row_class = 'bg-rose-50 hover:bg-rose-100 transition-colors border-l-4 border-rose-400';
+                                    ?>
+                                    <tr class="<?= $row_class ?>"
+                                        onclick="window.location.href='index.php?view=editar_ticket&id=<?= $t['id'] ?>'">
+                                        <td class="px-4 py-3 text-sm font-bold text-blue-600">
+                                            #<?= str_pad($t['id'], 4, '0', STR_PAD_LEFT) ?></td>
+                                        <td class="px-4 py-3">
+                                            <div class="text-sm font-semibold text-slate-800"><?= htmlspecialchars($t['titulo']) ?>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3"><span
+                                                class="px-2.5 py-1 rounded-lg text-xs font-semibold <?= $p_class ?>"><?= htmlspecialchars($t['prioridad']) ?></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-slate-500"><?= htmlspecialchars($t['categoria']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php endif; ?>
 
-                        // [FIX] Ordenar: 1. Sin Asignar, 2. Asignados, 3. Completados
-                        usort($tickets_listar, function ($a, $b) {
-                            $estados_fin = ['Completo', 'Resuelto', 'Cerrado'];
+            <!-- Tabla Tickets Recientes -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-3 shrink-0">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        <i class="ri-list-check text-indigo-500"></i> Tickets Recientes
+                    </h2>
+                    <a href="index.php?view=listados"
+                        class="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-100 transition-colors">
+                        Ver Todos
+                    </a>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        ID</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Asunto</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Fecha</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Solicitante</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Prioridad</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Estado</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Categoría</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <?php
+                                if (empty($tickets)) {
+                                    echo "<tr><td colspan='8' class='px-6 py-8 text-center text-gray-500'>No hay tickets registrados.</td></tr>";
+                                } else {
+                                    $tickets_listar = $tickets;
+                                    usort($tickets_listar, function ($a, $b) {
+                                        $estados_fin = ['Completo', 'Resuelto', 'Cerrado'];
+                                        $a_fin = in_array($a['estado'], $estados_fin);
+                                        $b_fin = in_array($b['estado'], $estados_fin);
+                                        $a_assigned = !empty($a['tecnico_id']);
+                                        $b_assigned = !empty($b['tecnico_id']);
+                                        $tier_a = $a_fin ? 2 : ($a_assigned ? 1 : 0);
+                                        $tier_b = $b_fin ? 2 : ($b_assigned ? 1 : 0);
+                                        if ($tier_a !== $tier_b)
+                                            return $tier_a - $tier_b;
+                                        return $b['id'] - $a['id'];
+                                    });
+                                    $tickets_recientes = array_slice($tickets_listar, 0, 10);
+                                    foreach ($tickets_recientes as $t) {
+                                        $prio_colors = ['Baja' => 'bg-emerald-100 text-emerald-700', 'Media' => 'bg-amber-100 text-amber-700', 'Alta' => 'bg-orange-100 text-orange-700', 'Critica' => 'bg-rose-100 text-rose-700'];
+                                        $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-100 text-slate-700';
+                                        $status_colors = ['Pendiente' => 'bg-yellow-50 text-yellow-600', 'Asignado' => 'bg-blue-50 text-blue-600', 'Completo' => 'bg-emerald-50 text-emerald-600'];
+                                        $s_class = $status_colors[$t['estado']] ?? 'bg-slate-50 text-slate-600';
 
-                            // Determinar "Tier" (Nivel)
-                            // 0: Sin Asignar (Pendiente de asignar)
-                            // 1: Asignado (En proceso, pero no fin)
-                            // 2: Finalizado (Completo/Resuelto/Cerrado)
-                
-                            $a_fin = in_array($a['estado'], $estados_fin);
-                            $b_fin = in_array($b['estado'], $estados_fin);
+                                        $nombre_creador = 'Desconocido';
+                                        $rol_creador = '';
+                                        if (isset($GLOBALS["usuarios"])) {
+                                            foreach ($GLOBALS["usuarios"] as $u) {
+                                                if ($u["id"] == $t["creador_id"]) {
+                                                    $nombre_creador = $u["nombre"];
+                                                    $rol_creador = $u["rol"] ?? 'Usuario';
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        $rol_key = $GLOBALS['rol_colors_config'][$rol_creador] ?? 'slate';
+                                        $r_class = $GLOBALS['colores_badges_map'][$rol_key] ?? $GLOBALS['colores_badges_map']['slate'];
 
-                            $a_assigned = !empty($a['tecnico_id']);
-                            $b_assigned = !empty($b['tecnico_id']);
+                                        $nombre_tecnico = 'Sin Asignar';
+                                        $initials_tecnico = '??';
+                                        if (!empty($t['tecnico_id']) && isset($GLOBALS["usuarios"])) {
+                                            foreach ($GLOBALS["usuarios"] as $u) {
+                                                if ($u["id"] == $t["tecnico_id"]) {
+                                                    $nombre_tecnico = $u["nombre"];
+                                                    $initials_tecnico = strtoupper(substr($u["nombre"], 0, 2));
+                                                    break;
+                                                }
+                                            }
+                                        }
 
-                            $tier_a = 0;
-                            if ($a_fin)
-                                $tier_a = 2;
-                            elseif ($a_assigned)
-                                $tier_a = 1;
-                            else
-                                $tier_a = 0; // Unassigned & Not Finished
-                
-                            $tier_b = 0;
-                            if ($b_fin)
-                                $tier_b = 2;
-                            elseif ($b_assigned)
-                                $tier_b = 1;
-                            else
-                                $tier_b = 0;
+                                        $row_class = 'hover:bg-indigo-50/50 transition-all duration-200';
+                                        if (stripos($t['titulo'], 'Nuevo Ingreso') !== false)
+                                            $row_class = 'bg-emerald-50 hover:bg-emerald-100 transition-colors border-l-4 border-emerald-400';
+                                        elseif (stripos($t['titulo'], 'Baja de Personal') !== false)
+                                            $row_class = 'bg-rose-50 hover:bg-rose-100 transition-colors border-l-4 border-rose-400';
 
-                            if ($tier_a !== $tier_b) {
-                                return $tier_a - $tier_b; // Menor tier primero (0 -> 1 -> 2)
-                            }
+                                        $ticket_data_json = htmlspecialchars(json_encode([
+                                            'id' => $t['id'],
+                                            'titulo' => $t['titulo'],
+                                            'descripcion' => $t['descripcion'],
+                                            'fecha' => date('d/m/Y H:i', strtotime($t['fecha_creacion'])),
+                                            'solicitante' => $nombre_creador,
+                                            'rol_solicitante' => $rol_creador,
+                                            'estado' => $t['estado'],
+                                            'prioridad' => $t['prioridad'],
+                                            'categoria' => $t['categoria'],
+                                            'tecnico' => $nombre_tecnico,
+                                            'tecnico_initials' => $initials_tecnico,
+                                            'tecnico_id' => $t['tecnico_id']
+                                        ]), ENT_QUOTES, 'UTF-8');
 
-                            // Secondary sort: ID DESC (Newest first)
-                            return $b['id'] - $a['id'];
-                        });
-
-                        $tickets_recientes = array_slice($tickets_listar, 0, 10);
-                        foreach ($tickets_recientes as $t) {
-                            $prio_colors = [
-                                'Baja' => 'bg-emerald-100 text-emerald-700',
-                                'Media' => 'bg-amber-100 text-amber-700',
-                                'Alta' => 'bg-orange-100 text-orange-700',
-                                'Critica' => 'bg-rose-100 text-rose-700'
-                            ];
-                            $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-100 text-slate-700';
-
-                            $status_colors = [
-                                'Pendiente' => 'bg-yellow-50 text-yellow-600',
-                                'Asignado' => 'bg-blue-50 text-blue-600',
-                                'Completo' => 'bg-emerald-50 text-emerald-600'
-                            ];
-                            $s_class = $status_colors[$t['estado']] ?? 'bg-slate-50 text-slate-600';
-
-                            // Solicitante
-                            $nombre_creador = 'Desconocido';
-                            $rol_creador = '';
-                            if (isset($GLOBALS["usuarios"])) {
-                                foreach ($GLOBALS["usuarios"] as $u) {
-                                    if ($u["id"] == $t["creador_id"]) {
-                                        $nombre_creador = $u["nombre"];
-                                        $rol_creador = $u["rol"] ?? 'Usuario';
-                                        break;
+                                        echo '<tr class="' . $row_class . ' cursor-pointer group/row" onclick="verDetallesTicket(this)" data-ticket="' . $ticket_data_json . '">';
+                                        echo '<td class="px-4 py-3 text-center text-sm font-medium text-gray-900">#' . str_pad($t['id'], 4, '0', STR_PAD_LEFT) . '</td>';
+                                        echo '<td class="px-4 py-3"><div class="text-sm font-bold text-slate-800">' . htmlspecialchars($t['titulo']) . '</div><div class="text-xs text-slate-400 mt-0.5 truncate max-w-[200px]">' . htmlspecialchars(substr($t['descripcion'], 0, 50)) . '...</div></td>';
+                                        echo '<td class="px-4 py-3 text-center text-xs text-gray-500 whitespace-nowrap">' . date('d/m/y', strtotime($t['fecha_creacion'])) . '</td>';
+                                        echo '<td class="px-4 py-3 text-center"><div class="flex flex-col items-center"><span class="text-xs font-medium text-slate-700">' . htmlspecialchars($nombre_creador) . '</span><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset ' . $r_class . ' mt-1">' . htmlspecialchars($rol_creador) . '</span></div></td>';
+                                        echo '<td class="px-4 py-3 text-center"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' . $p_class . '">' . $t['prioridad'] . '</span></td>';
+                                        echo '<td class="px-4 py-3 text-center"><div class="flex flex-col items-center gap-1"><span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ' . $s_class . '">' . $t['estado'] . '</span>';
+                                        if ($t['estado'] === 'Asignado' && !empty($t['tecnico_id'])) {
+                                            echo '<div class="flex items-center gap-1 bg-white px-2 py-1 rounded-full border border-indigo-200 shadow-sm"><div class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[9px] font-bold">' . $initials_tecnico . '</div><span class="text-xs font-bold text-indigo-700">' . htmlspecialchars(explode(' ', $nombre_tecnico)[0]) . '</span></div>';
+                                        }
+                                        echo '</div></td>';
+                                        echo '<td class="px-4 py-3 text-center text-xs text-gray-500">' . htmlspecialchars($t['categoria']) . '</td>';
+                                        echo '<td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-1">';
+                                        echo '<button type="button" class="text-sky-600 hover:text-sky-900 bg-sky-50 p-1.5 rounded-lg hover:bg-sky-100 transition-colors" title="Ver Detalles"><i class="ri-eye-line"></i></button>';
+                                        echo '<button onclick="window.location.href=\'index.php?view=editar_ticket&id=' . $t['id'] . '\'; event.stopPropagation();" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 p-1.5 rounded-lg hover:bg-indigo-100 transition-colors" title="Editar"><i class="ri-edit-box-line"></i></button>';
+                                        echo '</div></td>';
+                                        echo '</tr>';
                                     }
                                 }
-                            }
-
-                            $rol_key = $GLOBALS['rol_colors_config'][$rol_creador] ?? 'slate';
-                            $r_class = $GLOBALS['colores_badges_map'][$rol_key] ?? $GLOBALS['colores_badges_map']['slate'];
-
-                            // Tecnico Asignado (Nuevo Look)
-                            $nombre_tecnico = 'Sin Asignar';
-                            $initials_tecnico = '??';
-                            if (!empty($t['tecnico_id']) && isset($GLOBALS["usuarios"])) {
-                                foreach ($GLOBALS["usuarios"] as $u) {
-                                    if ($u["id"] == $t["tecnico_id"]) {
-                                        $nombre_tecnico = $u["nombre"];
-                                        $initials_tecnico = strtoupper(substr($u["nombre"], 0, 2));
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Lógica de Resaltado (Global)
-                            $row_class = 'hover:bg-indigo-50/50 transition-all hover:shadow-md hover:scale-[1.005] duration-200';
-                            if (stripos($t['titulo'], 'Nuevo Ingreso') !== false) {
-                                $row_class = 'bg-emerald-50 hover:bg-emerald-100 transition-colors group border-l-4 border-emerald-400';
-                            } elseif (stripos($t['titulo'], 'Baja de Personal') !== false) {
-                                $row_class = 'bg-rose-50 hover:bg-rose-100 transition-colors group border-l-4 border-rose-400';
-                            }
-
-                            // Datos para Modal
-                            $ticket_data_json = htmlspecialchars(json_encode([
-                                'id' => $t['id'],
-                                'titulo' => $t['titulo'],
-                                'descripcion' => $t['descripcion'],
-                                'fecha' => date('d/m/Y H:i', strtotime($t['fecha_creacion'])),
-                                'solicitante' => $nombre_creador,
-                                'rol_solicitante' => $rol_creador,
-                                'estado' => $t['estado'],
-                                'prioridad' => $t['prioridad'],
-                                'categoria' => $t['categoria'],
-                                'tecnico' => $nombre_tecnico,
-                                'tecnico_initials' => $initials_tecnico,
-                                'tecnico_id' => $t['tecnico_id']
-                            ]), ENT_QUOTES, 'UTF-8');
-
-                            echo '<tr class="' . $row_class . ' cursor-pointer group/row" onclick="verDetallesTicket(this)" data-ticket="' . $ticket_data_json . '">';
-
-                            // ID
-                            echo '<td class="px-6 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">#' . str_pad($t['id'], 4, '0', STR_PAD_LEFT) . '</td>';
-
-                            // Asunto
-                            echo '<td class="px-6 py-4 text-left">';
-                            echo '<div class="text-sm font-bold text-slate-800">' . htmlspecialchars($t['titulo']) . '</div>';
-                            echo '<div class="text-xs text-slate-400 mt-1 truncate max-w-xs group-hover/row:text-slate-600 transition-colors">' . htmlspecialchars(substr($t['descripcion'], 0, 50)) . '...</div>';
-                            echo '</td>';
-
-                            // Fecha
-                            echo '<td class="px-6 py-4 text-center whitespace-nowrap text-xs text-gray-500">' . date('d/m/y', strtotime($t['fecha_creacion'])) . '</td>';
-
-                            // Solicitante
-                            echo '<td class="px-6 py-4 text-center whitespace-nowrap">';
-                            echo '<div class="flex flex-col items-center justify-center">';
-                            echo '<span class="text-sm font-medium text-slate-700">' . htmlspecialchars($nombre_creador) . '</span>';
-                            echo '<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset ' . $r_class . ' mt-1">' . htmlspecialchars($rol_creador) . '</span>';
-                            echo '</div></td>';
-
-                            // Prioridad
-                            echo '<td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' . $p_class . '">' . $t['prioridad'] . '</span></td>';
-
-                            // Estado + Tecnico
-                            echo '<td class="px-6 py-4 text-center whitespace-nowrap">';
-                            echo '<div class="flex flex-col items-center gap-2">';
-                            echo '<span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ' . $s_class . '">' . $t['estado'] . '</span>';
-
-                            if ($t['estado'] === 'Asignado' && !empty($t['tecnico_id'])) {
-                                echo '<div class="flex items-center gap-2 mt-1 bg-white px-3 py-1.5 rounded-full border border-indigo-200 shadow-sm">';
-                                echo '<div class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">' . $initials_tecnico . '</div>';
-                                echo '<span class="text-xs font-bold text-indigo-700">' . htmlspecialchars(explode(' ', $nombre_tecnico)[0]) . '</span>';
-                                echo '</div>';
-                            }
-                            echo '</div>';
-                            echo '</td>';
-
-                            // Categoria
-                            echo '<td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-500">' . htmlspecialchars($t['categoria']) . '</td>';
-
-                            // Acciones
-                            echo '<td class="px-6 py-4 text-center whitespace-nowrap text-sm font-medium">';
-                            echo '<div class="flex items-center justify-center gap-2">';
-                            // Botón VER (Ojo)
-                            echo '<button type="button" class="text-sky-600 hover:text-sky-900 bg-sky-50 p-2 rounded-lg hover:bg-sky-100 transition-colors shadow-sm" title="Ver Detalles"><i class="ri-eye-line text-lg"></i></button>';
-                            // Botón EDITAR
-                            echo '<button onclick="window.location.href=\'index.php?view=editar_ticket&id=' . $t['id'] . '\'; event.stopPropagation();" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 p-2 rounded-lg hover:bg-indigo-100 transition-colors shadow-sm" title="Editar"><i class="ri-edit-box-line text-lg"></i></button>';
-                            echo '</div>';
-                            echo '</td>';
-                            echo '</tr>';
-                        }
-                    }
-                    ?>
-                </tbody>
-            </table>
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
     <?php
     // -------------------------------------------------------------------------
     // 2. Dashboard para Técnicos
@@ -683,170 +596,666 @@ if ($rol_usuario === 'Admin') {
     $mis_resueltos = count(array_filter($mis_tickets, fn($t) => $t['estado'] === 'Completo'));
     ?>
 
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <i class="ri-tools-line text-purple-600"></i> Mi Panel - Técnico
-        </h2>
-    </div>
+    <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <a href="index.php?view=dashboard&filter=todos" class="block">
-            <div
-                class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Asignados</p>
-                        <p class="text-3xl font-bold mt-2"><?= $total_asignados ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-inbox-archive-line text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-        <a href="index.php?view=dashboard&filter=pendiente" class="block">
-            <div
-                class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-yellow-100 text-sm font-medium">Pendientes</p>
-                        <p class="text-3xl font-bold mt-2"><?= $mis_abiertos ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-time-line text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-        <a href="index.php?view=dashboard&filter=asignado" class="block">
-            <div
-                class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm font-medium">En Proceso</p>
-                        <p class="text-3xl font-bold mt-2"><?= $mis_en_proceso ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-loader-line text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-        <a href="index.php?view=dashboard&filter=completo" class="block">
-            <div
-                class="bg-gradient-to-br from-green-500 to-green-600 text-white p-5 rounded-xl shadow-lg transform hover:scale-105 transition h-full">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-green-100 text-sm font-medium">Completos</p>
-                        <p class="text-3xl font-bold mt-2"><?= $mis_resueltos ?></p>
-                    </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                        <i class="ri-checkbox-circle-line text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
+        <!-- COLUMNA IZQUIERDA: Sidebar de Herramientas (1/4) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-6">
 
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100">
-            <h3 class="text-lg font-bold text-blue-800 flex items-center gap-2">
-                <i class="ri-checkbox-multiple-line text-blue-600"></i> Tickets Asignados
-            </h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Asunto
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Solicitante
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Prioridad</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Categoría</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+
+
+            <!-- 2. Acciones Rápidas (Quick Actions) -->
+            <div
+                class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -mr-10 -mb-10"></div>
+
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i class="ri-flashlight-line"></i> Acciones Rápidas
+                    </h3>
+                </div>
+
+                <div class="flex flex-col gap-3 relative z-10" id="lista-acciones">
+                    <!-- Acciones Default -->
+                    <a href="index.php?view=mantenimiento_equipos"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-tools-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Registrar Mantenimiento</span>
+                    </a>
+
+                    <a href="index.php?view=inventario"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-qr-code-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Buscar Equipo</span>
+                    </a>
+
+                    <a href="index.php?view=historial_tecnico"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-history-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Historial Reparaciones</span>
+                    </a>
+
+                    <a href="index.php?view=registros_365"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-sky-600 flex items-center justify-center shadow-lg shadow-sky-600/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-microsoft-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Cuentas 365</span>
+                    </a>
+                </div>
+            </div>
+
+
+
+            <!-- 3. Herramientas / Utiles -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Herramientas</h3>
+                    <button type="button" onclick="openAddToolModal()"
+                        class="text-xs bg-slate-100 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors text-slate-400 hover:text-indigo-600"
+                        title="Agregar Herramienta">
+                        <i class="ri-add-line"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+
+
+                    <!-- Herramientas Personalizadas -->
                     <?php
-                    if (empty($mis_tickets)) {
-                        echo "<tr><td colspan='5' class='px-6 py-8 text-center text-gray-500'>No tienes tickets asignados.</td></tr>";
-                    } else {
-                        // Filtro interactivo
-                        $filtro = $_GET['filter'] ?? 'activos'; // Por defecto: solo pendientes
-                
-                        foreach ($mis_tickets as $t) {
-                            // Lógica de Filtrado
-                            if ($filtro == 'activos' && $t['estado'] == 'Completo')
-                                continue;
-                            if ($filtro == 'pendiente' && $t['estado'] !== 'Pendiente')
-                                continue;
-                            if ($filtro == 'asignado' && $t['estado'] !== 'Asignado')
-                                continue;
-                            if ($filtro == 'completo' && $t['estado'] !== 'Completo')
-                                continue;
+                    try {
+                        $stmt_tools = $pdo->prepare("SELECT * FROM herramientas_tecnico WHERE usuario_id = ? ORDER BY created_at DESC");
+                        $stmt_tools->execute([$usuario_id]);
+                        $herramientas = $stmt_tools->fetchAll(PDO::FETCH_ASSOC);
 
-                            $prio_colors = [
-                                'Baja' => 'bg-emerald-100 text-emerald-700',
-                                'Media' => 'bg-amber-100 text-amber-700',
-                                'Alta' => 'bg-orange-100 text-orange-700',
-                                'Critica' => 'bg-rose-100 text-rose-700'
-                            ];
-                            $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-100 text-slate-700';
+                        foreach ($herramientas as $h):
+                            // Colores aleatorios
+                            $colors = ['text-indigo-500', 'text-pink-500', 'text-cyan-500', 'text-violet-500'];
+                            $icon_color = $colors[$h['id'] % count($colors)];
+                            ?>
+                            <div class="group relative flex flex-col items-center justify-center p-2 rounded-lg hover:bg-slate-50 transition-colors gap-1 text-slate-600 hover:text-slate-800 cursor-pointer"
+                                onclick="window.open('<?= htmlspecialchars($h['url']) ?>', '_blank')">
 
-                            $status_colors = [
-                                'Pendiente' => 'bg-blue-50 text-blue-600',
-                                'En Atención' => 'bg-purple-50 text-purple-600',
-                                'Resuelto' => 'bg-emerald-50 text-emerald-600',
-                                'Cerrado' => 'bg-slate-50 text-slate-600'
-                            ];
-                            $s_class = $status_colors[$t['estado']] ?? 'bg-slate-50 text-slate-600';
+                                <i class="<?= htmlspecialchars($h['icono']) ?> text-xl <?= $icon_color ?>"></i>
+                                <span
+                                    class="text-[10px] font-medium text-center truncate w-full"><?= htmlspecialchars($h['nombre']) ?></span>
 
-                            // Lógica de Resaltado (Global)
-                            $row_class = 'hover:bg-slate-50 cursor-pointer transition-colors group border-l-4 border-transparent'; // Clase por defecto
-                            if (stripos($t['titulo'], 'Nuevo Ingreso') !== false) {
-                                $row_class = 'bg-emerald-50 hover:bg-emerald-100 transition-colors group border-l-4 border-emerald-400';
-                            } elseif (stripos($t['titulo'], 'Baja de Personal') !== false) {
-                                $row_class = 'bg-rose-50 hover:bg-rose-100 transition-colors group border-l-4 border-rose-400';
-                            }
-
-                            // Fila interactiva
-                            echo "<tr class='{$row_class}' onclick=\"window.location.href='index.php?view=editar_ticket&id=" . $t['id'] . "'\">";
-                            echo "<td class='px-6 py-4 text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors'>#" . str_pad($t['id'], 4, '0', STR_PAD_LEFT) . "</td>";
-                            echo "<td class='px-6 py-4'>";
-                            echo "<div class='text-sm font-semibold text-slate-800'>" . htmlspecialchars($t['titulo']) . "</div>";
-                            echo "<div class='text-xs text-slate-400 mt-0.5'>" . htmlspecialchars(substr($t['descripcion'], 0, 50)) . "...</div>";
-                            echo "</td>";
-                            echo "<td class='px-6 py-4 text-sm font-medium text-slate-700'>";
-                            echo "<div class='flex items-center gap-2'><div class='w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs text-slate-500 font-bold'>" . strtoupper(substr($t['creador'] ?? '?', 0, 1)) . "</div>" . htmlspecialchars($t['creador'] ?? 'Desconocido') . "</div>";
-                            echo "</td>";
-                            echo "<td class='px-6 py-4 text-sm text-slate-500 whitespace-nowrap'>";
-                            echo "<div class='flex items-center gap-1.5 font-medium'><i class='ri-calendar-event-line text-slate-400'></i> " . date('d M, Y', strtotime($t['fecha_creacion'])) . "</div>";
-                            echo "<div class='text-xs text-slate-400 pl-5 mt-0.5'>" . date('h:i A', strtotime($t['fecha_creacion'])) . "</div>";
-                            echo "</td>";
-                            echo "<td class='px-6 py-4'><span class='px-2.5 py-1 rounded-lg text-xs font-semibold {$p_class}'>" . htmlspecialchars($t['prioridad']) . "</span></td>";
-                            echo "<td class='px-6 py-4'><span class='px-2.5 py-1 rounded-full text-xs font-semibold {$s_class}'>" . htmlspecialchars($t['estado']) . "</span></td>";
-                            echo "<td class='px-6 py-4 text-sm text-slate-600'>" . htmlspecialchars($t['categoria']) . "</td>";
-                            echo "</tr>";
-                        }
+                                <!-- Botones Hover -->
+                                <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onclick="event.stopPropagation();">
+                                    <button onclick="editarHerramienta(<?= htmlspecialchars(json_encode($h)) ?>)"
+                                        class="p-1 rounded bg-white shadow-sm text-slate-400 hover:text-indigo-500 hover:scale-110 transition-all"
+                                        title="Editar">
+                                        <i class="ri-pencil-line text-xs"></i>
+                                    </button>
+                                    <button onclick="eliminarHerramienta(<?= $h['id'] ?>, this)"
+                                        class="p-1 rounded bg-white shadow-sm text-slate-400 hover:text-rose-500 hover:scale-110 transition-all"
+                                        title="Eliminar">
+                                        <i class="ri-delete-bin-line text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endforeach;
+                    } catch (PDOException $e) { /* Ignore */
                     }
                     ?>
-                </tbody>
-            </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: Tablero Kanban (3/4) -->
+        <div
+            class="w-full lg:w-3/4 bg-slate-100/50 rounded-3xl p-6 border border-slate-200 overflow-hidden flex flex-col gap-6">
+
+            <!-- 1. Tarjeta de Perfil & Resumen (Moved) -->
+            <div
+                class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-sm relative overflow-hidden group shrink-0">
+                <div
+                    class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl group-hover:bg-purple-500/20 transition-all">
+                </div>
+
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-1">
+                            Hola, <?= htmlspecialchars(explode(' ', $GLOBALS['nombre_usuario'])[0]) ?>
+                        </h2>
+                        <p class="text-slate-500 text-sm">Panel de Técnico</p>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="bg-purple-50 rounded-xl p-3 border border-purple-100 text-center min-w-[100px]">
+                            <span class="block text-2xl font-bold text-purple-600"><?= $total_asignados ?></span>
+                            <span class="text-[10px] uppercase font-bold text-purple-400">Asignados</span>
+                        </div>
+                        <div class="bg-orange-50 rounded-xl p-3 border border-orange-100 text-center min-w-[100px]">
+                            <span class="block text-2xl font-bold text-orange-600"><?= $mis_abiertos ?></span>
+                            <span class="text-[10px] uppercase font-bold text-orange-400">Pendientes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                    <i class="ri-kanban-view-2 text-indigo-500"></i> Tablero de Trabajo
+                </h2>
+                <div class="flex gap-2">
+                    <button onclick="location.reload()"
+                        class="p-2 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors text-sm"
+                        title="Refrescar">
+                        <i class="ri-refresh-line"></i>
+                    </button>
+                    <!-- Button Removed as Technicians do not create tickets -->
+                </div>
+            </div>
+
+            <!-- KANBAN COLUMNS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 h-0 min-h-0 overflow-hidden">
+
+                <!-- 1. PENDIENTES -->
+                <div class="flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <span class="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-orange-500"></span> Pendientes
+                        </span>
+                        <span
+                            class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold"><?= $mis_abiertos ?></span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto space-y-3 pr-2 pb-20 custom-scrollbar">
+                        <?php
+                        $pendientes = array_filter($mis_tickets, fn($t) => $t['estado'] === 'Pendiente');
+                        if (empty($pendientes)): ?>
+                            <div class="text-center py-10 opacity-50 border-2 border-dashed border-slate-300 rounded-xl">
+                                <i class="ri-check-double-line text-2xl text-slate-400"></i>
+                                <p class="text-xs text-slate-500 mt-2">Todo al día</p>
+                            </div>
+                        <?php else:
+                            foreach ($pendientes as $t):
+                                $prio_colors = ['Baja' => 'bg-emerald-100 text-emerald-700', 'Media' => 'bg-amber-100 text-amber-700', 'Alta' => 'bg-orange-100 text-orange-700', 'Critica' => 'bg-rose-100 text-rose-700'];
+                                $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-100 text-slate-700';
+                                ?>
+                                <div onclick="window.location.href='index.php?view=editar_ticket&id=<?= $t['id'] ?>'"
+                                    class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-orange-200 hover:scale-[1.02] transition-all cursor-pointer group relative overflow-hidden">
+                                    <div
+                                        class="absolute left-0 top-0 bottom-0 w-1 bg-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    </div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span
+                                            class="text-[10px] font-bold text-slate-400">#<?= str_pad($t['id'], 4, '0', STR_PAD_LEFT) ?></span>
+                                        <span
+                                            class="px-2 py-0.5 rounded text-[10px] font-bold <?= $p_class ?>"><?= $t['prioridad'] ?></span>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">
+                                        <?= htmlspecialchars($t['titulo']) ?>
+                                    </h4>
+                                    <p class="text-xs text-slate-500 line-clamp-2 mb-3"><?= htmlspecialchars($t['descripcion']) ?>
+                                    </p>
+                                    <div class="flex items-center justify-between pt-2 border-t border-slate-50">
+                                        <span class="text-[10px] text-slate-400 flex items-center gap-1">
+                                            <i class="ri-calendar-line"></i> <?= date('d M', strtotime($t['fecha_creacion'])) ?>
+                                        </span>
+                                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500"
+                                            title="Solicitante">
+                                            <?= strtoupper(substr($t['creador'] ?? 'U', 0, 1)) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; endif; ?>
+                    </div>
+                </div>
+
+                <!-- 2. EN PROCESO -->
+                <div class="flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <span class="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span> En Proceso
+                        </span>
+                        <span
+                            class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold"><?= $mis_en_proceso ?></span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto space-y-3 pr-2 pb-20 custom-scrollbar">
+                        <?php
+                        $proceso = array_filter($mis_tickets, fn($t) => $t['estado'] === 'Asignado');
+                        if (empty($proceso)): ?>
+                            <div class="text-center py-10 opacity-50 border-2 border-dashed border-slate-300 rounded-xl">
+                                <i class="ri-tools-line text-2xl text-slate-400"></i>
+                                <p class="text-xs text-slate-500 mt-2">Sin tickets activos</p>
+                            </div>
+                        <?php else:
+                            foreach ($proceso as $t):
+                                $prio_colors = ['Baja' => 'bg-emerald-100 text-emerald-700', 'Media' => 'bg-amber-100 text-amber-700', 'Alta' => 'bg-orange-100 text-orange-700', 'Critica' => 'bg-rose-100 text-rose-700'];
+                                $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-100 text-slate-700';
+                                ?>
+                                <div onclick="window.location.href='index.php?view=editar_ticket&id=<?= $t['id'] ?>'"
+                                    class="bg-white p-4 rounded-xl shadow-sm border border-blue-200 ring-1 ring-blue-500/10 hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer group relative overflow-hidden">
+                                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span
+                                            class="text-[10px] font-bold text-slate-400">#<?= str_pad($t['id'], 4, '0', STR_PAD_LEFT) ?></span>
+                                        <span
+                                            class="px-2 py-0.5 rounded text-[10px] font-bold <?= $p_class ?>"><?= $t['prioridad'] ?></span>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">
+                                        <?= htmlspecialchars($t['titulo']) ?>
+                                    </h4>
+                                    <p class="text-xs text-slate-500 line-clamp-2 mb-3"><?= htmlspecialchars($t['descripcion']) ?>
+                                    </p>
+                                    <div class="flex items-center justify-between pt-2 border-t border-slate-50">
+                                        <span class="text-[10px] text-blue-500 font-bold flex items-center gap-1">
+                                            <i class="ri-loader-4-line animate-spin"></i> Trabajando
+                                        </span>
+                                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500"
+                                            title="Solicitante">
+                                            <?= strtoupper(substr($t['creador'] ?? 'U', 0, 1)) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; endif; ?>
+                    </div>
+                </div>
+
+
+
+            </div>
         </div>
     </div>
 
     <?php
     // -------------------------------------------------------------------------
-    // 3. Dashboard para Usuarios
+    // 3. Dashboard para RRHH
+    // -------------------------------------------------------------------------
+} elseif ($rol_usuario === 'RRHH') {
+    // Fetch RRHH forms
+    $formularios_rrhh = [];
+    $stats_rrhh = ['ingresos' => 0, 'salidas' => 0, 'licencias' => 0, 'mes_ingresos' => 0, 'mes_salidas' => 0, 'mes_licencias' => 0];
+    try {
+        $stmt_rrhh = $pdo->query("SELECT * FROM formularios_rrhh ORDER BY id DESC LIMIT 50");
+        $formularios_rrhh = $stmt_rrhh->fetchAll(PDO::FETCH_ASSOC);
+
+        // Stats totales
+        $stats_rrhh['ingresos'] = count(array_filter($formularios_rrhh, fn($f) => $f['tipo'] === 'Ingreso'));
+        $stats_rrhh['salidas'] = count(array_filter($formularios_rrhh, fn($f) => $f['tipo'] === 'Salida'));
+        $stats_rrhh['licencias'] = count(array_filter($formularios_rrhh, fn($f) => $f['tipo'] === 'Licencia'));
+
+        // Stats del mes actual
+        $mes_actual = date('Y-m');
+        foreach ($formularios_rrhh as $f) {
+            $fecha = $f['fecha_solicitud'] ?? $f['fecha_efectiva'] ?? '';
+            if (str_starts_with($fecha, $mes_actual)) {
+                if ($f['tipo'] === 'Ingreso')
+                    $stats_rrhh['mes_ingresos']++;
+                elseif ($f['tipo'] === 'Salida')
+                    $stats_rrhh['mes_salidas']++;
+                elseif ($f['tipo'] === 'Licencia')
+                    $stats_rrhh['mes_licencias']++;
+            }
+        }
+    } catch (PDOException $e) { /* ignore */
+    }
+    ?>
+
+    <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
+
+        <!-- COLUMNA IZQUIERDA: Acciones + Stats (1/4) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-6">
+
+            <!-- Acciones Rápidas -->
+            <div
+                class="bg-gradient-to-br from-pink-700 to-rose-900 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -mr-10 -mb-10"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-pink-200 flex items-center gap-2">
+                        <i class="ri-flashlight-line"></i> Acciones Rápidas
+                    </h3>
+                </div>
+                <div class="flex flex-col gap-3 relative z-10">
+                    <a href="index.php?view=nuevo_ingreso"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-user-add-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Nueva Alta</span>
+                    </a>
+                    <a href="index.php?view=nueva_salida"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-user-unfollow-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Nueva Baja</span>
+                    </a>
+                    <a href="index.php?view=solicitud_licencia"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-shield-keyhole-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Solicitar Licencia</span>
+                    </a>
+                    <a href="index.php?view=historial_rrhh"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-file-list-3-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Ver Historial</span>
+                    </a>
+                    <a href="index.php?view=personal"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-contacts-book-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Gestión Personal</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Estadísticas del Mes -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1 overflow-y-auto custom-scrollbar">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <i class="ri-calendar-line text-pink-500"></i> Este Mes
+                </h3>
+                <div class="space-y-3">
+                    <button onclick="filtrarRRHHDash('Ingreso')" data-card="Ingreso"
+                        class="rrhh-stat-card w-full flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-100 hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-user-add-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Ingresos</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-emerald-600"><?= $stats_rrhh['mes_ingresos'] ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarRRHHDash('Salida')" data-card="Salida"
+                        class="rrhh-stat-card w-full flex items-center justify-between p-3 bg-rose-50 rounded-xl border border-rose-100 hover:border-rose-300 hover:shadow-md hover:shadow-rose-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-user-unfollow-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Salidas</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-rose-600"><?= $stats_rrhh['mes_salidas'] ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarRRHHDash('Licencia')" data-card="Licencia"
+                        class="rrhh-stat-card w-full flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-shield-keyhole-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Licencias</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-indigo-600"><?= $stats_rrhh['mes_licencias'] ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="mt-5 pt-4 border-t border-slate-100">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="ri-bar-chart-2-line text-slate-400"></i> Totales Históricos
+                    </h4>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="block text-lg font-bold text-emerald-600"><?= $stats_rrhh['ingresos'] ?></span>
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase">Altas</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="block text-lg font-bold text-rose-600"><?= $stats_rrhh['salidas'] ?></span>
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase">Bajas</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="block text-lg font-bold text-indigo-600"><?= $stats_rrhh['licencias'] ?></span>
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase">Licenc.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Perfil + Formularios Recientes (3/4) -->
+        <div
+            class="w-full lg:w-3/4 bg-slate-100/50 rounded-3xl p-6 border border-slate-200 overflow-hidden flex flex-col gap-6">
+
+            <!-- Tarjeta de Perfil -->
+            <div
+                class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-sm relative overflow-hidden group shrink-0">
+                <div
+                    class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-pink-500/10 blur-2xl group-hover:bg-pink-500/20 transition-all">
+                </div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-pink-500/30">
+                            <?= strtoupper(substr($GLOBALS['nombre_usuario'], 0, 1)) ?>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-0.5">
+                                Hola, <?= htmlspecialchars(explode(' ', $GLOBALS['nombre_usuario'])[0]) ?>
+                            </h2>
+                            <p class="text-slate-500 text-sm flex items-center gap-1">
+                                <i class="ri-user-star-line text-pink-500"></i> Panel de Recursos Humanos
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <!-- Tarjeta Ingresos -->
+                        <button onclick="filtrarRRHHDash('Ingreso')" data-card="Ingreso"
+                            class="rrhh-stat-card bg-emerald-50 rounded-xl p-3 border border-emerald-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-emerald-600 group-hover:text-emerald-700"><?= $stats_rrhh['ingresos'] ?></span>
+                            <span class="text-[10px] uppercase font-bold text-emerald-400">Ingresos</span>
+                            <div
+                                class="mt-1 text-[9px] text-emerald-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <!-- Tarjeta Salidas -->
+                        <button onclick="filtrarRRHHDash('Salida')" data-card="Salida"
+                            class="rrhh-stat-card bg-rose-50 rounded-xl p-3 border border-rose-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-rose-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-rose-600 group-hover:text-rose-700"><?= $stats_rrhh['salidas'] ?></span>
+                            <span class="text-[10px] uppercase font-bold text-rose-400">Salidas</span>
+                            <div class="mt-1 text-[9px] text-rose-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <!-- Tarjeta Licencias -->
+                        <button onclick="filtrarRRHHDash('Licencia')" data-card="Licencia"
+                            class="rrhh-stat-card bg-indigo-50 rounded-xl p-3 border border-indigo-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-indigo-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-indigo-600 group-hover:text-indigo-700"><?= $stats_rrhh['licencias'] ?></span>
+                            <span class="text-[10px] uppercase font-bold text-indigo-400">Licencias</span>
+                            <div
+                                class="mt-1 text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formularios Recientes -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        <i class="ri-file-list-3-line text-pink-500"></i> Formularios Recientes
+                    </h2>
+                    <!-- Filtros tipo tab -->
+                    <div class="flex gap-1 bg-slate-100 p-1 rounded-xl" id="rrhh-filter-tabs">
+                        <button onclick="filtrarRRHHDash('todos')" data-filter="todos"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-700 shadow-sm transition-all rrhh-tab-btn">Todos</button>
+                        <button onclick="filtrarRRHHDash('Ingreso')" data-filter="Ingreso"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-500 hover:bg-white/60 transition-all rrhh-tab-btn">Ingresos</button>
+                        <button onclick="filtrarRRHHDash('Salida')" data-filter="Salida"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-500 hover:bg-white/60 transition-all rrhh-tab-btn">Salidas</button>
+                        <button onclick="filtrarRRHHDash('Licencia')" data-filter="Licencia"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-500 hover:bg-white/60 transition-all rrhh-tab-btn">Licencias</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <?php if (empty($formularios_rrhh)): ?>
+                        <div class="text-center py-16 opacity-50 border-2 border-dashed border-slate-300 rounded-xl">
+                            <i class="ri-inbox-line text-4xl text-slate-400"></i>
+                            <p class="text-slate-500 mt-2">No hay formularios registrados</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-2" id="rrhh-forms-list">
+                            <?php foreach ($formularios_rrhh as $f):
+                                $tipo = $f['tipo'];
+                                $tipo_colors = [
+                                    'Ingreso' => ['badge' => 'bg-emerald-100 text-emerald-700 border-emerald-200', 'icon' => 'ri-user-add-line', 'border' => 'border-l-emerald-400'],
+                                    'Salida' => ['badge' => 'bg-rose-100 text-rose-700 border-rose-200', 'icon' => 'ri-user-unfollow-line', 'border' => 'border-l-rose-400'],
+                                    'Licencia' => ['badge' => 'bg-indigo-100 text-indigo-700 border-indigo-200', 'icon' => 'ri-shield-keyhole-line', 'border' => 'border-l-indigo-400'],
+                                ];
+                                $tc = $tipo_colors[$tipo] ?? ['badge' => 'bg-slate-100 text-slate-700 border-slate-200', 'icon' => 'ri-file-line', 'border' => 'border-l-slate-400'];
+                                $fecha_mostrar = $f['fecha_solicitud'] ?? $f['fecha_efectiva'] ?? '';
+                                ?>
+                                <div class="rrhh-form-row bg-white rounded-xl border border-slate-200 border-l-4 <?= $tc['border'] ?> p-4 flex items-center justify-between hover:shadow-md transition-all group"
+                                    data-tipo="<?= $tipo ?>">
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            class="px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1 <?= $tc['badge'] ?>">
+                                            <i class="<?= $tc['icon'] ?>"></i> <?= $tipo ?>
+                                        </span>
+                                        <div>
+                                            <p class="font-bold text-slate-800 text-sm">
+                                                <?= htmlspecialchars($f['nombre_colaborador']) ?>
+                                            </p>
+                                            <p class="text-xs text-slate-400"><?= htmlspecialchars($f['cargo_zona'] ?? '') ?></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-slate-400 hidden md:block">
+                                            <i class="ri-calendar-line"></i>
+                                            <?= $fecha_mostrar ? date('d M Y', strtotime($fecha_mostrar)) : '—' ?>
+                                        </span>
+                                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <?php if ($tipo === 'Ingreso'): ?>
+                                                <a href="imprimir_acta_ingreso.php?id=<?= $f['id'] ?>" target="_blank"
+                                                    class="p-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors"
+                                                    title="Imprimir Acta">
+                                                    <i class="ri-printer-line text-sm"></i>
+                                                </a>
+                                            <?php elseif ($tipo === 'Licencia'): ?>
+                                                <a href="imprimir_acta_licencia.php?id=<?= $f['id'] ?>" target="_blank"
+                                                    class="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                                                    title="Imprimir Acta">
+                                                    <i class="ri-printer-line text-sm"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="imprimir_acta_salida.php?id=<?= $f['id'] ?>" target="_blank"
+                                                    class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                                                    title="Imprimir Acta">
+                                                    <i class="ri-printer-line text-sm"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                            <a href="index.php?view=editar_rrhh&id=<?= $f['id'] ?>"
+                                                class="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                                title="Editar">
+                                                <i class="ri-pencil-line text-sm"></i>
+                                            </a>
+                                        </div>
+                                        <span
+                                            class="text-xs font-bold text-slate-400">#<?= str_pad($f['id'], 4, '0', STR_PAD_LEFT) ?></span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rrhhFiltroActivo = 'todos';
+
+        function filtrarRRHHDash(tipo) {
+            const row        s = document.querySelectorAll('.rrhh-form-row');
+            const tabs = document.querySelectorAll('.rrhh-tab-btn');
+            const cards = document.querySelectorAll('.rrhh-stat-card');
+
+            // Toggle: si ya está activo, volver a 'todos'
+            if (rrhhFiltroActivo === tipo && tipo !== 'todos') {
+                tipo = 'todos';
+            }
+            rrhhFiltroActivo = tipo;
+
+            // Sync tab buttons
+            tabs.forEach(t => {
+                const isActive = t.dataset.filter === tipo;
+                t.classList.toggle('bg-white', isActive);
+                t.classList.toggle('text-slate-700', isActive);
+                t.classList.toggle('shadow-sm', isActive);
+                t.classList.toggle('text-slate-500', !isActive);
+            });
+
+            // Highlight active stat card con estilos inline (más confiable que Tailwind dinámico)
+            const ringColors = {
+                'Ingreso': '0 0 0 3px #34d399',   // emerald-400
+                'Salida': '0 0 0 3px #fb7185',    // rose-400
+                'Licencia': '0 0 0 3px #818cf8',    // indigo-400
+            };
+            cards.forEach(c => {
+                const cardTipo = c.dataset.card;
+                if (cardTipo === tipo && tipo !== 'todos') {
+                    c.style.boxShadow = ringColors[cardTipo] || '';
+                    c.style.transform = 'scale(1.05)';
+                } else {
+                    c.style.boxShadow = '';
+                    c.style.transform = '';
+                }
+            });
+
+            // Filtrar filas con animación suave
+            rows.forEach(r => {
+                const show = (tipo === 'todos' || r.dataset.tipo === tipo);
+                if (show) {
+                    r.style.display = '';
+                    r.style.opacity = '0';
+                    r.style.transform = 'translateY(6px)';
+                    requestAnimationFrame(() => {
+                        r.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                        r.style.opacity = '1';
+                        r.style.transform = 'translateY(0)';
+                    });
+                } else {
+                    r.style.transition = '';
+                    r.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+
+    <?php
+    // -------------------------------------------------------------------------
+    // 4. Dashboard para Usuarios
     // -------------------------------------------------------------------------
 } elseif ($rol_usuario === 'Usuario') {
+
     $mis_tickets_creados = array_filter($tickets, function ($t) use ($usuario_id) {
         return $t['creador_id'] == $usuario_id;
     });
@@ -855,324 +1264,1265 @@ if ($rol_usuario === 'Admin') {
     $tickets_resueltos = count(array_filter($mis_tickets_creados, fn($t) => $t['estado'] === 'Completo'));
     ?>
 
-    <!-- Encabezado Usuario Moderno -->
-    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                <div
-                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                    <i class="ri-user-smile-line text-xl"></i>
-                </div>
-                <span class="bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900">
-                    Hola, <?php echo htmlspecialchars($GLOBALS['nombre_usuario'] ?? 'Usuario'); ?>
-                </span>
-            </h2>
-            <p class="text-slate-500 mt-1 ml-14">Bienvenido a tu panel de gestión de tickets.</p>
-        </div>
-        <div>
-            <a href="index.php?view=crear_ticket"
-                class="group relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold text-white transition-all duration-200 bg-blue-600 font-pj rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/30 hover:-translate-y-1">
-                <i class="ri-add-circle-line mr-2 text-lg"></i> Nuevo Ticket
-                <div
-                    class="absolute -inset-3 rounded-xl bg-blue-400 opacity-20 group-hover:opacity-40 blur-lg group-hover:duration-200 animate-tilt">
-                </div>
-            </a>
-        </div>
-    </div>
+    <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
 
-    <!-- Cards Stats Usuario -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- Mis Tickets Totales -->
-        <a href="index.php?view=mis_tickets" class="block group">
+        <!-- COLUMNA IZQUIERDA: Acciones + Stats (1/4) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-6">
+
+            <!-- Acciones Rápidas -->
             <div
-                class="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-blue-600 text-white p-5 rounded-2xl shadow-xl shadow-blue-500/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/30">
-                <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-10 blur-xl"></div>
-                <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black opacity-10 blur-xl"></div>
-
-                <div class="relative z-10 flex items-center justify-between">
-                    <div>
-                        <p class="text-indigo-100 text-sm font-semibold uppercase tracking-wider">Mis Tickets</p>
-                        <p class="text-3xl font-bold mt-2 group-hover:scale-110 transition-transform origin-left">
-                            <?= $total_creados ?>
-                        </p>
-                        <p class="text-xs text-indigo-200 mt-1 font-medium">Historial completo</p>
-                    </div>
-                    <div
-                        class="bg-white/20 p-3 rounded-xl backdrop-blur-sm group-hover:rotate-12 transition-transform duration-300">
-                        <i class="ri-ticket-2-line text-2xl text-white"></i>
-                    </div>
+                class="bg-gradient-to-br from-blue-700 to-indigo-900 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -mr-10 -mb-10"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-blue-200 flex items-center gap-2">
+                        <i class="ri-flashlight-line"></i> Acciones Rápidas
+                    </h3>
+                </div>
+                <div class="flex flex-col gap-3 relative z-10">
+                    <a href="index.php?view=crear_ticket"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-blue-400 flex items-center justify-center shadow-lg shadow-blue-400/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-add-circle-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Nuevo Ticket</span>
+                    </a>
+                    <a href="index.php?view=mis_tickets"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-400/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-ticket-2-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Mis Tickets</span>
+                    </a>
+                    <a href="index.php?view=listados"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-violet-400 flex items-center justify-center shadow-lg shadow-violet-400/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-list-check-2"></i>
+                        </div>
+                        <span class="font-medium text-sm">Ver Listados</span>
+                    </a>
                 </div>
             </div>
-        </a>
 
-        <!-- Pendientes -->
-        <a href="index.php?view=listados&filter=usuario_pendientes" class="block group">
-            <div
-                class="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 text-white p-5 rounded-2xl shadow-xl shadow-orange-500/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/30">
-                <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-10 blur-xl"></div>
-
-                <div class="relative z-10 flex items-center justify-between">
-                    <div>
-                        <p class="text-amber-100 text-sm font-semibold uppercase tracking-wider">Pendientes</p>
-                        <p class="text-3xl font-bold mt-2 group-hover:scale-110 transition-transform origin-left">
-                            <?= $tickets_abiertos ?>
-                        </p>
-                        <p class="text-xs text-amber-100 mt-1 font-medium">Esperando respuesta</p>
-                    </div>
-                    <div
-                        class="bg-white/20 p-3 rounded-xl backdrop-blur-sm group-hover:rotate-12 transition-transform duration-300">
-                        <i class="ri-time-line text-2xl text-white"></i>
-                    </div>
+            <!-- Estadísticas -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1 overflow-y-auto custom-scrollbar">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <i class="ri-bar-chart-2-line text-blue-500"></i> Mis Tickets
+                </h3>
+                <div class="space-y-3">
+                    <button onclick="filtrarTablaUsuarioPorEstado('todos')" data-card-u="todos"
+                        class="usuario-stat-card w-full flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-ticket-2-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Total</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-indigo-600"><?= $total_creados ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarTablaUsuarioPorEstado('Pendiente')" data-card-u="Pendiente"
+                        class="usuario-stat-card w-full flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-100 hover:border-amber-300 hover:shadow-md hover:shadow-amber-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-time-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Pendientes</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-amber-600"><?= $tickets_abiertos ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarTablaUsuarioPorEstado('Completo')" data-card-u="Completo"
+                        class="usuario-stat-card w-full flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-100 hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-checkbox-circle-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Resueltos</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-emerald-600"><?= $tickets_resueltos ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
                 </div>
-            </div>
-        </a>
 
-        <!-- Completos -->
-        <a href="index.php?view=listados&filter=usuario_completos" class="block group">
-            <div
-                class="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-5 rounded-2xl shadow-xl shadow-emerald-500/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/30">
-                <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-10 blur-xl"></div>
-
-                <div class="relative z-10 flex items-center justify-between">
-                    <div>
-                        <p class="text-emerald-100 text-sm font-semibold uppercase tracking-wider">Resueltos</p>
-                        <p class="text-3xl font-bold mt-2 group-hover:scale-110 transition-transform origin-left">
-                            <?= $tickets_resueltos ?>
-                        </p>
-                        <p class="text-xs text-emerald-100 mt-1 font-medium">Procesos finalizados</p>
-                    </div>
-                    <div
-                        class="bg-white/20 p-3 rounded-xl backdrop-blur-sm group-hover:rotate-12 transition-transform duration-300">
-                        <i class="ri-checkbox-circle-line text-2xl text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Sección de Estadísticas y Búsqueda -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- 1. Distribución por Categorías -->
-        <div class="md:col-span-2 bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <i class="ri-pie-chart-2-line text-blue-600"></i> Distribución de Problemas
-            </h3>
-
-            <?php
-            // Lógica Backend para Categorías
-            $categorias_stats = [];
-            foreach ($mis_tickets_creados as $t) {
-                $cat = $t['categoria'] ?? 'Otros';
-                if (!isset($categorias_stats[$cat])) {
-                    $categorias_stats[$cat] = 0;
-                }
-                $categorias_stats[$cat]++;
-            }
-            arsort($categorias_stats); // Ordenar de mayor a menor
-            $top_categorias = array_slice($categorias_stats, 0, 3); // Top 3
-        
-            if (empty($top_categorias)) {
-                echo "<p class='text-sm text-slate-400 italic'>No hay datos suficientes para mostrar estadísticas.</p>";
-            } else {
-                echo "<div class='space-y-4'>";
-                foreach ($top_categorias as $cat => $count) {
-                    $porcentaje = ($total_creados > 0) ? round(($count / $total_creados) * 100) : 0;
-
-                    // Colores dinámicos para las barras (ciclo simple)
-                    $colors = [
-                        'bg-blue-500',
-                        'bg-indigo-500',
-                        'bg-violet-500'
-                    ];
-                    static $i = 0;
-                    $bar_color = $colors[$i % 3];
-                    $i++;
-
-                    echo "<div>";
-                    echo "<div class='flex justify-between text-sm mb-1'>";
-                    echo "<span class='font-medium text-slate-700'>{$cat}</span>";
-                    echo "<span class='text-slate-500'>{$count} tickets ({$porcentaje}%)</span>";
-                    echo "</div>";
-                    echo "<div class='w-full bg-slate-100 rounded-full h-2.5 overflow-hidden'>";
-                    echo "<div class='h-2.5 rounded-full {$bar_color}' style='width: {$porcentaje}%'></div>";
-                    echo "</div>";
-                    echo "</div>";
-                }
-                echo "</div>";
-            }
-            ?>
-        </div>
-
-        <!-- 2. Búsqueda Rápida (Estilizada como Card) -->
-        <div
-            class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-lg p-6 text-white flex flex-col justify-center">
-            <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
-                <i class="ri-search-line text-blue-400"></i> Búsqueda Rápida
-            </h3>
-            <p class="text-sm text-slate-300 mb-4">Filtra tus tickets por ID, asunto o estado al instante.</p>
-
-            <div class="relative">
-                <i class="ri-search-2-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="buscadorTicketsUsuario" placeholder="Escribe para buscar..."
-                    class="w-full bg-slate-700/50 border border-slate-600 text-white placeholder-slate-400 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent block pl-10 p-3 transition-all"
-                    onkeyup="filtrarTablaUsuario()">
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabla Historial Premium -->
-    <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-        <div class="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
-                    <i class="ri-history-line"></i>
-                </div>
-                Actividad Reciente
-            </h3>
-            <a href="index.php?view=mis_tickets"
-                class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">Ver Todo</a>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-100" id="tablaTicketsUsuario">
-                <thead>
-                    <tr class="bg-slate-50/50">
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">ID Ticket
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Asunto
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Estado
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
-                            Prioridad</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Categoría
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">Acción
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-slate-100">
+                <!-- Top Categorías -->
+                <div class="mt-5 pt-4 border-t border-slate-100">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="ri-pie-chart-2-line text-slate-400"></i> Top Categorías
+                    </h4>
                     <?php
-                    if (empty($mis_tickets_creados)) {
-                        echo "<tr><td colspan='6' class='px-6 py-12 text-center text-slate-500'>
-                                <div class='flex flex-col items-center justify-center'>
-                                    <div class='bg-slate-50 p-4 rounded-full mb-3'><i class='ri-ticket-line text-3xl text-slate-300'></i></div>
-                                    <p class='font-medium'>No has creado ningún ticket aún</p>
-                                    <p class='text-sm mt-1 text-slate-400'>¡Crea uno nuevo para comenzar!</p>
-                                </div>
-                              </td></tr>";
+                    $categorias_stats = [];
+                    foreach ($mis_tickets_creados as $t) {
+                        $cat = $t['categoria'] ?? 'Otros';
+                        $categorias_stats[$cat] = ($categorias_stats[$cat] ?? 0) + 1;
+                    }
+                    arsort($categorias_stats);
+                    $top_categorias = array_slice($categorias_stats, 0, 3);
+                    $bar_colors_u = ['bg-blue-500', 'bg-indigo-500', 'bg-violet-500'];
+                    $ci = 0;
+                    if (empty($top_categorias)) {
+                        echo "<p class='text-xs text-slate-400 italic'>Sin datos aún.</p>";
                     } else {
-                        // Mostrar TODOS los tickets en la tabla del dashboard para que el buscador funcione sobre todo el set
-                        // OJO: Si son muchos, limitamos. Pero el usuario pidió buscador "mágico".
-                        // Para mantener performance y estética, mantendré los últimos 10
-                        $ultimos_tickets = array_slice($mis_tickets_creados, 0, 10);
-
-                        foreach ($ultimos_tickets as $t) {
-                            $status_colors = [
-                                'Pendiente' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
-                                'Asignado' => 'bg-blue-50 text-blue-700 ring-blue-600/20',
-                                'En Atención' => 'bg-purple-50 text-purple-700 ring-purple-600/20',
-                                'Completo' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-                                'Resuelto' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-                                'Cerrado' => 'bg-slate-50 text-slate-700 ring-slate-600/20'
-                            ];
-                            $s_class = $status_colors[$t['estado']] ?? 'bg-slate-50 text-slate-700 ring-slate-600/20';
-
-                            $prio_colors = [
-                                'Baja' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-                                'Media' => 'bg-amber-50 text-amber-700 ring-amber-600/20',
-                                'Alta' => 'bg-orange-50 text-orange-700 ring-orange-600/20',
-                                'Critica' => 'bg-rose-50 text-rose-700 ring-rose-600/20'
-                            ];
-                            $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-50 text-slate-700 ring-slate-600/20';
-
-                            // Lógica de Resaltado
-                            $row_class = 'hover:bg-slate-50/80 transition-all duration-200 group';
-
-                            echo "<tr class='{$row_class}'>";
-                            echo "<td class='px-6 py-3'>
-                                    <span class='font-mono text-sm font-medium text-slate-500'>#" . str_pad($t['id'], 4, '0', STR_PAD_LEFT) . "</span>
-                                  </td>";
-
-                            echo "<td class='px-6 py-3'>
-                                    <div class='text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors'>" . htmlspecialchars($t['titulo']) . "</div>
-                                    <div class='text-xs text-slate-400 mt-0.5 flex items-center gap-1'><i class='ri-time-line'></i> " . date('d M Y, h:i A', strtotime($t['fecha_creacion'])) . "</div>
-                                  </td>";
-
-                            echo "<td class='px-6 py-3 text-center'>
-                                    <span class='inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {$s_class} gap-1.5'>
-                                        <span class='w-1.5 h-1.5 rounded-full bg-current'></span>
-                                        " . htmlspecialchars($t['estado']) . "
-                                    </span>
-                                  </td>";
-
-                            echo "<td class='px-6 py-3 text-center'>
-                                    <span class='inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {$p_class} gap-1.5'>
-                                        <i class='ri-flag-fill text-[10px]'></i>
-                                        " . htmlspecialchars($t['prioridad']) . "
-                                    </span>
-                                  </td>";
-
-                            echo "<td class='px-6 py-3 text-sm text-slate-600'>
-                                    <div class='flex items-center justify-center gap-1.5 bg-slate-50 py-1 px-3 rounded-lg border border-slate-100 w-fit mx-auto'>
-                                        <i class='ri-folder-2-line text-slate-400'></i>
-                                        <span class='font-medium text-xs'>" . htmlspecialchars($t['categoria']) . "</span>
-                                    </div>
-                                  </td>";
-
-                            echo "<td class='px-6 py-3 text-center'>
-                                    <a href='index.php?view=editar_ticket&id={$t['id']}' 
-                                       class='inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm' 
-                                       title='Ver Detalles'>
-                                       <i class='ri-eye-line'></i>
-                                    </a>
-                                  </td>";
-                            echo "</tr>";
+                        foreach ($top_categorias as $cat => $count) {
+                            $pct = ($total_creados > 0) ? round(($count / $total_creados) * 100) : 0;
+                            $bc = $bar_colors_u[$ci % 3];
+                            $ci++;
+                            echo "<div class='mb-2'>";
+                            echo "<div class='flex justify-between text-xs mb-1'><span class='font-medium text-slate-600 truncate max-w-[120px]'>{$cat}</span><span class='text-slate-400'>{$pct}%</span></div>";
+                            echo "<div class='w-full bg-slate-100 rounded-full h-1.5'><div class='h-1.5 rounded-full {$bc}' style='width:{$pct}%'></div></div>";
+                            echo "</div>";
                         }
                     }
                     ?>
-                </tbody>
-            </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Perfil + Tabla (3/4) -->
+        <div
+            class="w-full lg:w-3/4 bg-slate-100/50 rounded-3xl p-6 border border-slate-200 overflow-hidden flex flex-col gap-6">
+
+            <!-- Tarjeta de Perfil -->
+            <div
+                class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-sm relative overflow-hidden group shrink-0">
+                <div
+                    class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-blue-500/10 blur-2xl group-hover:bg-blue-500/20 transition-all">
+                </div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/30">
+                            <?= strtoupper(substr($GLOBALS['nombre_usuario'], 0, 1)) ?>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-0.5">
+                                Hola, <?= htmlspecialchars(explode(' ', $GLOBALS['nombre_usuario'])[0]) ?>
+                            </h2>
+                            <p class="text-slate-500 text-sm flex items-center gap-1">
+                                <i class="ri-user-smile-line text-blue-500"></i> Panel de Usuario
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="filtrarTablaUsuarioPorEstado('todos')" data-card-u="todos"
+                            class="usuario-stat-card bg-indigo-50 rounded-xl p-3 border border-indigo-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-indigo-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-indigo-600 group-hover:text-indigo-700"><?= $total_creados ?></span>
+                            <span class="text-[10px] uppercase font-bold text-indigo-400">Total</span>
+                            <div
+                                class="mt-1 text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <button onclick="filtrarTablaUsuarioPorEstado('Pendiente')" data-card-u="Pendiente"
+                            class="usuario-stat-card bg-amber-50 rounded-xl p-3 border border-amber-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-amber-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-amber-600 group-hover:text-amber-700"><?= $tickets_abiertos ?></span>
+                            <span class="text-[10px] uppercase font-bold text-amber-400">Pendientes</span>
+                            <div
+                                class="mt-1 text-[9px] text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <button onclick="filtrarTablaUsuarioPorEstado('Completo')" data-card-u="Completo"
+                            class="usuario-stat-card bg-emerald-50 rounded-xl p-3 border border-emerald-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-emerald-600 group-hover:text-emerald-700"><?= $tickets_resueltos ?></span>
+                            <span class="text-[10px] uppercase font-bold text-emerald-400">Resueltos</span>
+                            <div
+                                class="mt-1 text-[9px] text-emerald-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Tickets Recientes -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        <i class="ri-history-line text-blue-500"></i> Actividad Reciente
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <!-- Buscador compacto -->
+                        <div class="relative">
+                            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="buscadorTicketsUsuario" placeholder="Buscar..."
+                                class="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent bg-white text-slate-700 w-40 transition-all"
+                                onkeyup="filtrarTablaUsuario()">
+                        </div>
+                        <a href="index.php?view=mis_tickets"
+                            class="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors">
+                            Ver Todo
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <table class="min-w-full divide-y divide-slate-100" id="tablaTicketsUsuario">
+                            <thead>
+                                <tr class="bg-slate-50/50">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        ID</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Asunto</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Estado</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Prioridad</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Categoría</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100">
+                                <?php
+                                if (empty($mis_tickets_creados)) {
+                                    echo "<tr><td colspan='6' class='px-6 py-12 text-center text-slate-400'>
+                                        <div class='flex flex-col items-center'>
+                                            <div class='bg-slate-50 p-4 rounded-full mb-3'><i class='ri-ticket-line text-3xl text-slate-300'></i></div>
+                                            <p class='font-medium'>No has creado ningún ticket aún</p>
+                                            <a href='index.php?view=crear_ticket' class='mt-2 text-sm text-blue-600 hover:underline'>Crear mi primer ticket</a>
+                                        </div></td></tr>";
+                                } else {
+                                    $ultimos_tickets = array_slice($mis_tickets_creados, 0, 20);
+                                    foreach ($ultimos_tickets as $t) {
+                                        $status_colors = [
+                                            'Pendiente' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
+                                            'Asignado' => 'bg-blue-50 text-blue-700 ring-blue-600/20',
+                                            'En Atención' => 'bg-purple-50 text-purple-700 ring-purple-600/20',
+                                            'Completo' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+                                            'Resuelto' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+                                            'Cerrado' => 'bg-slate-50 text-slate-700 ring-slate-600/20'
+                                        ];
+                                        $s_class = $status_colors[$t['estado']] ?? 'bg-slate-50 text-slate-700 ring-slate-600/20';
+                                        $prio_colors = [
+                                            'Baja' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+                                            'Media' => 'bg-amber-50 text-amber-700 ring-amber-600/20',
+                                            'Alta' => 'bg-orange-50 text-orange-700 ring-orange-600/20',
+                                            'Critica' => 'bg-rose-50 text-rose-700 ring-rose-600/20'
+                                        ];
+                                        $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-50 text-slate-700 ring-slate-600/20';
+
+                                        echo "<tr class='hover:bg-slate-50/80 transition-all duration-200 group cursor-pointer' data-estado='" . htmlspecialchars($t['estado']) . "' onclick=\"window.location.href='index.php?view=editar_ticket&id={$t['id']}'\">";
+                                        echo "<td class='px-4 py-3'><span class='font-mono text-xs font-medium text-slate-400'>#" . str_pad($t['id'], 4, '0', STR_PAD_LEFT) . "</span></td>";
+                                        echo "<td class='px-4 py-3'><div class='text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1'>" . htmlspecialchars($t['titulo']) . "</div><div class='text-xs text-slate-400 mt-0.5'>" . date('d M Y', strtotime($t['fecha_creacion'])) . "</div></td>";
+                                        echo "<td class='px-4 py-3 text-center'><span class='inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {$s_class} gap-1'><span class='w-1.5 h-1.5 rounded-full bg-current'></span>" . htmlspecialchars($t['estado']) . "</span></td>";
+                                        echo "<td class='px-4 py-3 text-center'><span class='inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {$p_class} gap-1'><i class='ri-flag-fill text-[10px]'></i>" . htmlspecialchars($t['prioridad']) . "</span></td>";
+                                        echo "<td class='px-4 py-3 text-xs text-slate-600'>" . htmlspecialchars($t['categoria']) . "</td>";
+                                        echo "<td class='px-4 py-3 text-center'><a href='index.php?view=editar_ticket&id={$t['id']}' class='inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all' title='Ver'><i class='ri-eye-line text-xs'></i></a></td>";
+                                        echo "</tr>";
+                                    }
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php
+    // -------------------------------------------------------------------------
+    // 2.5 Dashboard para Gerencia (Nuevo)
+    // -------------------------------------------------------------------------
+} elseif ($rol_usuario === 'Gerencia') {
+    // --- Lógica de Datos ---
+
+    // 1. Estadísticas Tickets
+    $total_tickets = count($tickets);
+    $t_abiertos = count(array_filter($tickets, fn($t) => $t['estado'] === 'Pendiente'));
+    $t_en_proceso = count(array_filter($tickets, fn($t) => $t['estado'] === 'Asignado'));
+    $t_resueltos = count(array_filter($tickets, fn($t) => $t['estado'] === 'Completo'));
+    $t_criticos = count(array_filter($tickets, fn($t) => $t['prioridad'] === 'Critica'));
+
+    // Calculo de porcentaje de resolución
+    $porcentaje_resueltos = $total_tickets > 0 ? round(($t_resueltos / $total_tickets) * 100) : 0;
+
+    // 2. Estadísticas Inventario
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) FROM inventario");
+        $total_activos = $stmt->fetchColumn();
+
+        $stmt = $pdo->query("SELECT tipo, COUNT(*) as cant FROM inventario GROUP BY tipo");
+        $activos_por_tipo = $stmt->fetchAll(PDO::FETCH_KEY_PAIR); // [ 'Laptop' => 10, 'PC' => 5 ]
+    } catch (Exception $e) {
+        $total_activos = 0;
+        $activos_por_tipo = [];
+    }
+
+    // 3. Estadísticas RRHH (Mes Actual)
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) FROM formularios_rrhh WHERE tipo = 'Ingreso' AND MONTH(fecha_registro) = MONTH(CURRENT_DATE()) AND YEAR(fecha_registro) = YEAR(CURRENT_DATE())");
+        $ingresos_mes = $stmt->fetchColumn();
+
+        $stmt = $pdo->query("SELECT COUNT(*) FROM formularios_rrhh WHERE tipo = 'Salida' AND MONTH(fecha_registro) = MONTH(CURRENT_DATE()) AND YEAR(fecha_registro) = YEAR(CURRENT_DATE())");
+        $salidas_mes = $stmt->fetchColumn();
+
+        // Total Personal Activo (Simple aproximación: total usuarios o total inventario asignado? Usaremos usuarios activos)
+        $stmt = $pdo->query("SELECT COUNT(*) FROM usuarios WHERE estado = 'Activo'");
+        $personal_activo = $stmt->fetchColumn();
+    } catch (Exception $e) {
+        $ingresos_mes = 0;
+        $salidas_mes = 0;
+        $personal_activo = 0;
+    }
+
+    // 4. Carga de Técnicos (Top 5)
+    $carga_tecnicos = []; // [ 'Nombre' => 5 tickets ]
+    foreach ($tickets as $t) {
+        if (!empty($t['tecnico_id']) && $t['estado'] != 'Resuelto' && $t['estado'] != 'Cerrado') {
+            // Buscar nombre del técnico (ineficiente loop pero funcional para datasets pequeños)
+            $nombre_tec = "Técnico #" . $t['tecnico_id'];
+            foreach ($GLOBALS['usuarios'] ?? [] as $u) {
+                if ($u['id'] == $t['tecnico_id']) {
+                    $nombre_tec = $u['nombre'];
+                    break;
+                }
+            }
+            $carga_tecnicos[$nombre_tec] = ($carga_tecnicos[$nombre_tec] ?? 0) + 1;
+        }
+    }
+    arsort($carga_tecnicos);
+    $carga_tecnicos = array_slice($carga_tecnicos, 0, 5);
+
+    ?>
+
+        <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
+
+        <!-- COLUMNA IZQUIERDA: Navegación Estratégica + KPIs Alerta (1/4) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-5 overflow-y-auto custom-scrollbar pb-4">
+
+            <!-- Menú Gerencial -->
+            <div class="bg-gradient-to-br from-slate-800 to-black rounded-2xl p-5 shadow-xl text-white relative overflow-hidden shrink-0">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -mr-10 -mb-10"></div>
+                <div class="flex items-center gap-2 mb-4 relative z-10">
+                    <i class="ri-briefcase-4-line text-indigo-300"></i>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-200">Gestión Estratégica</h3>
+                </div>
+                <div class="flex flex-col gap-2 relative z-10">
+                    <a href="index.php?view=reportes_nuevo"
+                        class="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ri-pie-chart-2-line text-sm"></i>
+                        </div>
+                        <span class="font-medium text-sm">Reportes Globales</span>
+                    </a>
+                    <a href="index.php?view=historial_rrhh"
+                        class="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div class="w-7 h-7 rounded-lg bg-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ri-group-line text-sm"></i>
+                        </div>
+                        <span class="font-medium text-sm">Talento Humano</span>
+                    </a>
+                    <a href="index.php?view=inventario"
+                        class="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div class="w-7 h-7 rounded-lg bg-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="ri-computer-line text-sm"></i>
+                        </div>
+                        <span class="font-medium text-sm">Inventario Tecnológico</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- KPIs Críticos / Alertas -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm shrink-0">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i class="ri-dashboard-3-line text-rose-500"></i> Indicadores Clave
+                </h3>
+                <div class="space-y-3">
+                    <!-- Resolución -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                         <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-semibold text-slate-600">Efectividad Global</span>
+                            <span class="text-xs font-bold text-indigo-600"><?= $porcentaje_resueltos ?>%</span>
+                         </div>
+                         <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                             <div class="h-full bg-indigo-500 rounded-full" style="width: <?= $porcentaje_resueltos ?>%"></div>
+                         </div>
+                    </div>
+
+                    <!-- Críticos -->
+                    <a href="index.php?view=seguimiento&prioridad=Critica" class="flex items-center justify-between p-3 rounded-xl border transition-all group <?= $t_criticos > 0 ? 'bg-rose-50 border-rose-100 hover:border-rose-300' : 'bg-emerald-50 border-emerald-100' ?>">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center <?= $t_criticos > 0 ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white' ?>">
+                                <i class="<?= $t_criticos > 0 ? 'ri-alarm-warning-line' : 'ri-check-double-line' ?>"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold <?= $t_criticos > 0 ? 'text-rose-700' : 'text-emerald-700' ?>">Casos Críticos</p>
+                                <p class="text-[10px] <?= $t_criticos > 0 ? 'text-rose-500' : 'text-emerald-500' ?>"><?= $t_criticos > 0 ? 'Requiere Atención' : 'Todo bajo control' ?></p>
+                            </div>
+                        </div>
+                        <span class="text-xl font-black <?= $t_criticos > 0 ? 'text-rose-600' : 'text-emerald-600' ?>"><?= $t_criticos ?></span>
+                    </a>
+
+                    <!-- RRHH Resumen -->
+                    <div class="grid grid-cols-2 gap-2">
+                         <div class="p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-center">
+                             <span class="block text-xl font-bold text-emerald-600">+<?= $ingresos_mes ?></span>
+                             <span class="text-[10px] font-bold text-emerald-400 uppercase">Ingresos</span>
+                         </div>
+                         <div class="p-2 bg-rose-50 rounded-lg border border-rose-100 text-center">
+                             <span class="block text-xl font-bold text-rose-600">-<?= $salidas_mes ?></span>
+                             <span class="text-[10px] font-bold text-rose-400 uppercase">Bajas</span>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventario Mini -->
+             <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm shrink-0 flex-1">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i class="ri-hard-drive-2-line text-cyan-500"></i> Activos IT
+                </h3>
+                <div class="flex items-center justify-between mb-4">
+                     <span class="text-3xl font-black text-slate-800"><?= $total_activos ?></span>
+                     <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">Total Equipos</span>
+                </div>
+                <div class="space-y-2 overflow-y-auto max-h-[150px] custom-scrollbar pr-1">
+                    <?php foreach ($activos_por_tipo as $tipo => $cant): ?>
+                    <div class="flex justify-between items-center text-xs p-1.5 hover:bg-slate-50 rounded-lg transition-colors">
+                        <span class="text-slate-600 font-medium truncate"><?= htmlspecialchars($tipo) ?></span>
+                        <span class="font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded"><?= $cant ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: Análisis Visión Global (3/4) -->
+        <div class="w-full lg:w-3/4 bg-slate-100/50 rounded-3xl p-6 border border-slate-200 overflow-hidden flex flex-col gap-6">
+
+            <!-- Tarjeta Perfil Gerencia -->
+            <div class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-sm relative overflow-hidden group shrink-0">
+                <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-slate-800/5 blur-2xl group-hover:bg-slate-800/10 transition-all"></div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-black flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-slate-500/30">
+                            <?= strtoupper(substr($GLOBALS['nombre_usuario'], 0, 1)) ?>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-0.5">
+                                Hola, <?= htmlspecialchars(explode(' ', $GLOBALS['nombre_usuario'])[0]) ?>
+                            </h2>
+                            <p class="text-slate-500 text-sm flex items-center gap-1">
+                                <i class="ri-bar-chart-groupped-line text-indigo-500"></i> Visión Estratégica
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 items-center">
+                        <div class="text-right">
+                             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</p>
+                             <p class="text-lg font-bold text-slate-700"><?php echo date('d M, Y'); ?></p>
+                        </div>
+                        <div class="h-8 w-px bg-slate-200"></div>
+                        <div class="text-right">
+                             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Personal Activo</p>
+                             <p class="text-lg font-bold text-emerald-600"><?= $personal_activo ?> <span class="text-xs text-emerald-400 font-normal">colaboradores</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distribución Visual Tickets -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden shrink-0">
+                 <div class="absolute inset-0 opacity-10 pointer-events-none">
+                    <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M0 100 Q 50 50 100 80 V 100 H 0 Z" fill="white" />
+                    </svg>
+                </div>
+                <div class="flex justify-between items-center mb-6 relative z-10">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="ri-pie-chart-2-line text-indigo-400"></i> Distribución de Tickets
+                    </h3>
+                    <div class="text-xs bg-white/10 px-3 py-1 rounded-full border border-white/10"><?= $total_tickets ?> Totales</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                    <!-- Nuevos -->
+                     <div class="bg-white/5 rounded-xl p-4 border border-white/5 hover:bg-white/10 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-blue-300 text-xs font-bold uppercase">Nuevos</span>
+                            <i class="ri-inbox-line text-blue-400"></i>
+                        </div>
+                        <div class="text-2xl font-bold mb-2"><?= $t_abiertos ?></div>
+                         <div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                             <div class="h-full bg-blue-500 rounded-full" style="width: <?= ($total_tickets > 0 ? ($t_abiertos / $total_tickets) * 100 : 0) ?>%"></div>
+                         </div>
+                    </div>
+                    <!-- Proceso -->
+                     <div class="bg-white/5 rounded-xl p-4 border border-white/5 hover:bg-white/10 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-purple-300 text-xs font-bold uppercase">En Proceso</span>
+                            <i class="ri-loader-line text-purple-400"></i>
+                        </div>
+                        <div class="text-2xl font-bold mb-2"><?= $t_en_proceso ?></div>
+                         <div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                             <div class="h-full bg-purple-500 rounded-full" style="width: <?= ($total_tickets > 0 ? ($t_en_proceso / $total_tickets) * 100 : 0) ?>%"></div>
+                         </div>
+                    </div>
+                    <!-- Resueltos -->
+                     <div class="bg-white/5 rounded-xl p-4 border border-white/5 hover:bg-white/10 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-emerald-300 text-xs font-bold uppercase">Resueltos</span>
+                            <i class="ri-checkbox-circle-line text-emerald-400"></i>
+                        </div>
+                        <div class="text-2xl font-bold mb-2"><?= $t_resueltos ?></div>
+                         <div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                             <div class="h-full bg-emerald-500 rounded-full" style="width: <?= ($total_tickets > 0 ? ($t_resueltos / $total_tickets) * 100 : 0) ?>%"></div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carga de Técnicos y Detalles -->
+            <div class="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="ri-team-line text-violet-600"></i> Carga Operativa (Top 5)
+                    </h3>
+                </div>
+                <div class="overflow-auto custom-scrollbar">
+                     <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-xs uppercase text-slate-400 font-semibold sticky top-0">
+                            <tr>
+                                <th class="px-5 py-3 bg-slate-50">Técnico</th>
+                                <th class="px-5 py-3 text-right bg-slate-50">Tickets Activos</th>
+                                <th class="px-5 py-3 text-right bg-slate-50">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            <?php foreach ($carga_tecnicos as $nombre => $cantidad): 
+                                $load_color = $cantidad > 5 ? 'bg-rose-50 text-rose-700' : ($cantidad > 2 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700');
+                                $load_text = $cantidad > 5 ? 'Alta' : ($cantidad > 2 ? 'Media' : 'Baja');
+                            ?>
+                                <tr onclick="window.location.href='index.php?view=historial_tecnico&tecnico=<?= urlencode($nombre) ?>'"
+                                    class="hover:bg-slate-50 transition-colors cursor-pointer group">
+                                    <td class="px-5 py-3 font-medium text-slate-700">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold group-hover:bg-violet-100 group-hover:text-violet-600 transition-colors">
+                                                <?= strtoupper(substr($nombre, 0, 1)) ?>
+                                            </div>
+                                            <?= htmlspecialchars($nombre) ?>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-3 text-right">
+                                        <span class="font-bold text-slate-700"><?= $cantidad ?></span>
+                                    </td>
+                                    <td class="px-5 py-3 text-right">
+                                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase <?= $load_color ?>"><?= $load_text ?></span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($carga_tecnicos)): ?>
+                                <tr>
+                                    <td colspan="3" class="p-8 text-center text-slate-400 italic">
+                                        <i class="ri-cup-line text-2xl mb-2 block"></i>
+                                        Sin carga activa registrada
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+<?php
+    // -------------------------------------------------------------------------
+    // 3. Dashboard para RRHH
+    // -------------------------------------------------------------------------
+} elseif ($rol_usuario === 'RRHH') {
+    // Fetch RRHH forms
+    $formularios_rrhh = [];
+    $stats_rrhh = ['ingresos' => 0, 'salidas' => 0, 'licencias' => 0, 'mes_ingresos' => 0, 'mes_salidas' => 0, 'mes_licencias' => 0];
+    try {
+        $stmt_rrhh = $pdo->query("SELECT * FROM formularios_rrhh ORDER BY id DESC LIMIT 50");
+        $formularios_rrhh = $stmt_rrhh->fetchAll(PDO::FETCH_ASSOC);
+
+        // Stats totales
+        $stats_rrhh['ingresos'] = count(array_filter($formularios_rrhh, fn($f) => $f['tipo'] === 'Ingreso'));
+        $stats_rrhh['salidas'] = count(array_filter($formularios_rrhh, fn($f) => $f['tipo'] === 'Salida'));
+        $stats_rrhh['licencias'] = count(array_filter($formularios_rrhh, fn($f) => $f['tipo'] === 'Licencia'));
+
+        // Stats del mes actual
+        $mes_actual = date('Y-m');
+        foreach ($formularios_rrhh as $f) {
+            $fecha = $f['fecha_solicitud'] ?? $f['fecha_efectiva'] ?? '';
+            if (str_starts_with($fecha, $mes_actual)) {
+                if ($f['tipo'] === 'Ingreso')
+                    $stats_rrhh['mes_ingresos']++;
+                elseif ($f['tipo'] === 'Salida')
+                    $stats_rrhh['mes_salidas']++;
+                elseif ($f['tipo'] === 'Licencia')
+                    $stats_rrhh['mes_licencias']++;
+            }
+        }
+    } catch (PDOException $e) { /* ignore */
+    }
+    ?>
+
+    <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
+
+        <!-- COLUMNA IZQUIERDA: Acciones + Stats (1/4) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-6">
+
+            <!-- Acciones Rápidas -->
+            <div
+                class="bg-gradient-to-br from-pink-700 to-rose-900 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -mr-10 -mb-10"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-pink-200 flex items-center gap-2">
+                        <i class="ri-flashlight-line"></i> Acciones Rápidas
+                    </h3>
+                </div>
+                <div class="flex flex-col gap-3 relative z-10">
+                    <a href="index.php?view=nuevo_ingreso"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-user-add-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Nueva Alta</span>
+                    </a>
+                    <a href="index.php?view=nueva_salida"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-user-unfollow-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Nueva Baja</span>
+                    </a>
+                    <a href="index.php?view=solicitud_licencia"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-shield-keyhole-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Solicitar Licencia</span>
+                    </a>
+                    <a href="index.php?view=historial_rrhh"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-file-list-3-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Ver Historial</span>
+                    </a>
+                    <a href="index.php?view=personal"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-contacts-book-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Gestión Personal</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Estadísticas del Mes -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1 overflow-y-auto custom-scrollbar">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <i class="ri-calendar-line text-pink-500"></i> Este Mes
+                </h3>
+                <div class="space-y-3">
+                    <button onclick="filtrarRRHHDash('Ingreso')" data-card="Ingreso"
+                        class="rrhh-stat-card w-full flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-100 hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-user-add-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Ingresos</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-emerald-600"><?= $stats_rrhh['mes_ingresos'] ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarRRHHDash('Salida')" data-card="Salida"
+                        class="rrhh-stat-card w-full flex items-center justify-between p-3 bg-rose-50 rounded-xl border border-rose-100 hover:border-rose-300 hover:shadow-md hover:shadow-rose-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-user-unfollow-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Salidas</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-rose-600"><?= $stats_rrhh['mes_salidas'] ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarRRHHDash('Licencia')" data-card="Licencia"
+                        class="rrhh-stat-card w-full flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-shield-keyhole-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Licencias</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-indigo-600"><?= $stats_rrhh['mes_licencias'] ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="mt-5 pt-4 border-t border-slate-100">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="ri-bar-chart-2-line text-slate-400"></i> Totales Históricos
+                    </h4>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="block text-lg font-bold text-emerald-600"><?= $stats_rrhh['ingresos'] ?></span>
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase">Altas</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="block text-lg font-bold text-rose-600"><?= $stats_rrhh['salidas'] ?></span>
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase">Bajas</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="block text-lg font-bold text-indigo-600"><?= $stats_rrhh['licencias'] ?></span>
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase">Licenc.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Perfil + Formularios Recientes (3/4) -->
+        <div
+            class="w-full lg:w-3/4 bg-slate-100/50 rounded-3xl p-6 border border-slate-200 overflow-hidden flex flex-col gap-6">
+
+            <!-- Tarjeta de Perfil -->
+            <div
+                class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-sm relative overflow-hidden group shrink-0">
+                <div
+                    class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-pink-500/10 blur-2xl group-hover:bg-pink-500/20 transition-all">
+                </div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-pink-500/30">
+                            <?= strtoupper(substr($GLOBALS['nombre_usuario'], 0, 1)) ?>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-0.5">
+                                Hola, <?= htmlspecialchars(explode(' ', $GLOBALS['nombre_usuario'])[0]) ?>
+                            </h2>
+                            <p class="text-slate-500 text-sm flex items-center gap-1">
+                                <i class="ri-user-star-line text-pink-500"></i> Panel de Recursos Humanos
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <!-- Tarjeta Ingresos -->
+                        <button onclick="filtrarRRHHDash('Ingreso')" data-card="Ingreso"
+                            class="rrhh-stat-card bg-emerald-50 rounded-xl p-3 border border-emerald-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-emerald-600 group-hover:text-emerald-700"><?= $stats_rrhh['ingresos'] ?></span>
+                            <span class="text-[10px] uppercase font-bold text-emerald-400">Ingresos</span>
+                            <div
+                                class="mt-1 text-[9px] text-emerald-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <!-- Tarjeta Salidas -->
+                        <button onclick="filtrarRRHHDash('Salida')" data-card="Salida"
+                            class="rrhh-stat-card bg-rose-50 rounded-xl p-3 border border-rose-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-rose-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-rose-600 group-hover:text-rose-700"><?= $stats_rrhh['salidas'] ?></span>
+                            <span class="text-[10px] uppercase font-bold text-rose-400">Salidas</span>
+                            <div class="mt-1 text-[9px] text-rose-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <!-- Tarjeta Licencias -->
+                        <button onclick="filtrarRRHHDash('Licencia')" data-card="Licencia"
+                            class="rrhh-stat-card bg-indigo-50 rounded-xl p-3 border border-indigo-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-indigo-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-indigo-600 group-hover:text-indigo-700"><?= $stats_rrhh['licencias'] ?></span>
+                            <span class="text-[10px] uppercase font-bold text-indigo-400">Licencias</span>
+                            <div
+                                class="mt-1 text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formularios Recientes -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        <i class="ri-file-list-3-line text-pink-500"></i> Formularios Recientes
+                    </h2>
+                    <!-- Filtros tipo tab -->
+                    <div class="flex gap-1 bg-slate-100 p-1 rounded-xl" id="rrhh-filter-tabs">
+                        <button onclick="filtrarRRHHDash('todos')" data-filter="todos"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-700 shadow-sm transition-all rrhh-tab-btn">Todos</button>
+                        <button onclick="filtrarRRHHDash('Ingreso')" data-filter="Ingreso"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-500 hover:bg-white/60 transition-all rrhh-tab-btn">Ingresos</button>
+                        <button onclick="filtrarRRHHDash('Salida')" data-filter="Salida"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-500 hover:bg-white/60 transition-all rrhh-tab-btn">Salidas</button>
+                        <button onclick="filtrarRRHHDash('Licencia')" data-filter="Licencia"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-500 hover:bg-white/60 transition-all rrhh-tab-btn">Licencias</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <?php if (empty($formularios_rrhh)): ?>
+                        <div class="text-center py-16 opacity-50 border-2 border-dashed border-slate-300 rounded-xl">
+                            <i class="ri-inbox-line text-4xl text-slate-400"></i>
+                            <p class="text-slate-500 mt-2">No hay formularios registrados</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-2" id="rrhh-forms-list">
+                            <?php foreach ($formularios_rrhh as $f):
+                                $tipo = $f['tipo'];
+                                $tipo_colors = [
+                                    'Ingreso' => ['badge' => 'bg-emerald-100 text-emerald-700 border-emerald-200', 'icon' => 'ri-user-add-line', 'border' => 'border-l-emerald-400'],
+                                    'Salida' => ['badge' => 'bg-rose-100 text-rose-700 border-rose-200', 'icon' => 'ri-user-unfollow-line', 'border' => 'border-l-rose-400'],
+                                    'Licencia' => ['badge' => 'bg-indigo-100 text-indigo-700 border-indigo-200', 'icon' => 'ri-shield-keyhole-line', 'border' => 'border-l-indigo-400'],
+                                ];
+                                $tc = $tipo_colors[$tipo] ?? ['badge' => 'bg-slate-100 text-slate-700 border-slate-200', 'icon' => 'ri-file-line', 'border' => 'border-l-slate-400'];
+                                $fecha_mostrar = $f['fecha_solicitud'] ?? $f['fecha_efectiva'] ?? '';
+                                ?>
+                                <div class="rrhh-form-row bg-white rounded-xl border border-slate-200 border-l-4 <?= $tc['border'] ?> p-4 flex items-center justify-between hover:shadow-md transition-all group"
+                                    data-tipo="<?= $tipo ?>">
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            class="px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1 <?= $tc['badge'] ?>">
+                                            <i class="<?= $tc['icon'] ?>"></i> <?= $tipo ?>
+                                        </span>
+                                        <div>
+                                            <p class="font-bold text-slate-800 text-sm">
+                                                <?= htmlspecialchars($f['nombre_colaborador']) ?>
+                                            </p>
+                                            <p class="text-xs text-slate-400"><?= htmlspecialchars($f['cargo_zona'] ?? '') ?></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-slate-400 hidden md:block">
+                                            <i class="ri-calendar-line"></i>
+                                            <?= $fecha_mostrar ? date('d M Y', strtotime($fecha_mostrar)) : '—' ?>
+                                        </span>
+                                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <?php if ($tipo === 'Ingreso'): ?>
+                                                <a href="imprimir_acta_ingreso.php?id=<?= $f['id'] ?>" target="_blank"
+                                                    class="p-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors"
+                                                    title="Imprimir Acta">
+                                                    <i class="ri-printer-line text-sm"></i>
+                                                </a>
+                                            <?php elseif ($tipo === 'Licencia'): ?>
+                                                <a href="imprimir_acta_licencia.php?id=<?= $f['id'] ?>" target="_blank"
+                                                    class="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                                                    title="Imprimir Acta">
+                                                    <i class="ri-printer-line text-sm"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="imprimir_acta_salida.php?id=<?= $f['id'] ?>" target="_blank"
+                                                    class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                                                    title="Imprimir Acta">
+                                                    <i class="ri-printer-line text-sm"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                            <a href="index.php?view=editar_rrhh&id=<?= $f['id'] ?>"
+                                                class="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                                title="Editar">
+                                                <i class="ri-pencil-line text-sm"></i>
+                                            </a>
+                                        </div>
+                                        <span
+                                            class="text-xs font-bold text-slate-400">#<?= str_pad($f['id'], 4, '0', STR_PAD_LEFT) ?></span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-                                                                                        functi        on         f        iltr        a              rTablaUsuario() {
-            var input, filter, table, tr, td, i, txtValue;
-            input = document.getElementById("buscadorTicketsUsuario");
-            filter = input.value.toUpperCase();
-            table = document.getElementById("tablaTicketsUsuario");
-            tr = table.getElementsByTagName("tr");
+        let rrhhFiltroActivo = 'todos';
 
-            for (i = 0; i < tr.length; i++) {
-                // Buscamos en todas las columnas relevantes (ID, Asunto, Estado, Categoría)
-                // Indices: 0 (ID),     1 (Asunto), 2 (Estado), 4 (Categoria)
-                var found = false;
-                var indices = [0, 1, 2, 4];
+        function filtrarRRHHDash(tipo) {
+            const row        s = document.querySelectorAll('.rrhh-form-row');
+            const tabs = document.querySelectorAll('.rrhh-tab-btn');
+            const cards = document.querySelectorAll('.rrhh-stat-card');
 
-                // Skip header row
-                if (tr[i].getElementsByTagName("th").length > 0) continue;
-
-                for (var j = 0; j < indices.length; j++) {
-                    td = tr[i].getElementsByTagName("td")[indices[j]];
-                    if (td) {
-                        txtValue = td.textContent || td.innerText;
-                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (found) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
+            // Toggle: si ya está activo, volver a 'todos'
+            if (rrhhFiltroActivo === tipo && tipo !== 'todos') {
+                tipo = 'todos';
             }
+            rrhhFiltroActivo = tipo;
+
+            // Sync tab buttons
+            tabs.forEach(t => {
+                const isActive = t.dataset.filter === tipo;
+                t.classList.toggle('bg-white', isActive);
+                t.classList.toggle('text-slate-700', isActive);
+                t.classList.toggle('shadow-sm', isActive);
+                t.classList.toggle('text-slate-500', !isActive);
+            });
+
+            // Highlight active stat card con estilos inline (más confiable que Tailwind dinámico)
+            const ringColors = {
+                'Ingreso': '0 0 0 3px #34d399',   // emerald-400
+                'Salida': '0 0 0 3px #fb7185',    // rose-400
+                'Licencia': '0 0 0 3px #818cf8',    // indigo-400
+            };
+            cards.forEach(c => {
+                const cardTipo = c.dataset.card;
+                if (cardTipo === tipo && tipo !== 'todos') {
+                    c.style.boxShadow = ringColors[cardTipo] || '';
+                    c.style.transform = 'scale(1.05)';
+                } else {
+                    c.style.boxShadow = '';
+                    c.style.transform = '';
+                }
+            });
+
+            // Filtrar filas con animación suave
+            rows.forEach(r => {
+                const show = (tipo === 'todos' || r.dataset.tipo === tipo);
+                if (show) {
+                    r.style.display = '';
+                    r.style.opacity = '0';
+                    r.style.transform = 'translateY(6px)';
+                    requestAnimationFrame(() => {
+                        r.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                        r.style.opacity = '1';
+                        r.style.transform = 'translateY(0)';
+                    });
+                } else {
+                    r.style.transition = '';
+                    r.style.display = 'none';
+                }
+            });
         }
     </script>
 
+
+    <?php
+    // -------------------------------------------------------------------------
+    // 4. Dashboard para Usuarios
+    // -------------------------------------------------------------------------
+} elseif ($rol_usuario === 'Usuario') {
+
+    $mis_tickets_creados = array_filter($tickets, function ($t) use ($usuario_id) {
+        return $t['creador_id'] == $usuario_id;
+    });
+    $total_creados = count($mis_tickets_creados);
+    $tickets_abiertos = count(array_filter($mis_tickets_creados, fn($t) => $t['estado'] === 'Pendiente'));
+    $tickets_resueltos = count(array_filter($mis_tickets_creados, fn($t) => $t['estado'] === 'Completo'));
+    ?>
+
+    <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
+
+        <!-- COLUMNA IZQUIERDA: Acciones + Stats (1/4) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-6">
+
+            <!-- Acciones Rápidas -->
+            <div
+                class="bg-gradient-to-br from-blue-700 to-indigo-900 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -mr-10 -mb-10"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-blue-200 flex items-center gap-2">
+                        <i class="ri-flashlight-line"></i> Acciones Rápidas
+                    </h3>
+                </div>
+                <div class="flex flex-col gap-3 relative z-10">
+                    <a href="index.php?view=crear_ticket"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-blue-400 flex items-center justify-center shadow-lg shadow-blue-400/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-add-circle-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Nuevo Ticket</span>
+                    </a>
+                    <a href="index.php?view=mis_tickets"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-400/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-ticket-2-line"></i>
+                        </div>
+                        <span class="font-medium text-sm">Mis Tickets</span>
+                    </a>
+                    <a href="index.php?view=listados"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition-all group">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-violet-400 flex items-center justify-center shadow-lg shadow-violet-400/40 group-hover:scale-110 transition-transform">
+                            <i class="ri-list-check-2"></i>
+                        </div>
+                        <span class="font-medium text-sm">Ver Listados</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1 overflow-y-auto custom-scrollbar">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <i class="ri-bar-chart-2-line text-blue-500"></i> Mis Tickets
+                </h3>
+                <div class="space-y-3">
+                    <button onclick="filtrarTablaUsuarioPorEstado('todos')" data-card-u="todos"
+                        class="usuario-stat-card w-full flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-ticket-2-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Total</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-indigo-600"><?= $total_creados ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarTablaUsuarioPorEstado('Pendiente')" data-card-u="Pendiente"
+                        class="usuario-stat-card w-full flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-100 hover:border-amber-300 hover:shadow-md hover:shadow-amber-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-time-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Pendientes</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-amber-600"><?= $tickets_abiertos ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                    <button onclick="filtrarTablaUsuarioPorEstado('Completo')" data-card-u="Completo"
+                        class="usuario-stat-card w-full flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-100 hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-100 transition-all duration-200 cursor-pointer group">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="ri-checkbox-circle-line text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Resueltos</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-emerald-600"><?= $tickets_resueltos ?></span>
+                            <i
+                                class="ri-arrow-right-s-line text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Top Categorías -->
+                <div class="mt-5 pt-4 border-t border-slate-100">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="ri-pie-chart-2-line text-slate-400"></i> Top Categorías
+                    </h4>
+                    <?php
+                    $categorias_stats = [];
+                    foreach ($mis_tickets_creados as $t) {
+                        $cat = $t['categoria'] ?? 'Otros';
+                        $categorias_stats[$cat] = ($categorias_stats[$cat] ?? 0) + 1;
+                    }
+                    arsort($categorias_stats);
+                    $top_categorias = array_slice($categorias_stats, 0, 3);
+                    $bar_colors_u = ['bg-blue-500', 'bg-indigo-500', 'bg-violet-500'];
+                    $ci = 0;
+                    if (empty($top_categorias)) {
+                        echo "<p class='text-xs text-slate-400 italic'>Sin datos aún.</p>";
+                    } else {
+                        foreach ($top_categorias as $cat => $count) {
+                            $pct = ($total_creados > 0) ? round(($count / $total_creados) * 100) : 0;
+                            $bc = $bar_colors_u[$ci % 3];
+                            $ci++;
+                            echo "<div class='mb-2'>";
+                            echo "<div class='flex justify-between text-xs mb-1'><span class='font-medium text-slate-600 truncate max-w-[120px]'>{$cat}</span><span class='text-slate-400'>{$pct}%</span></div>";
+                            echo "<div class='w-full bg-slate-100 rounded-full h-1.5'><div class='h-1.5 rounded-full {$bc}' style='width:{$pct}%'></div></div>";
+                            echo "</div>";
+                        }
+                    }
+                    ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Perfil + Tabla (3/4) -->
+        <div
+            class="w-full lg:w-3/4 bg-slate-100/50 rounded-3xl p-6 border border-slate-200 overflow-hidden flex flex-col gap-6">
+
+            <!-- Tarjeta de Perfil -->
+            <div
+                class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-sm relative overflow-hidden group shrink-0">
+                <div
+                    class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-blue-500/10 blur-2xl group-hover:bg-blue-500/20 transition-all">
+                </div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/30">
+                            <?= strtoupper(substr($GLOBALS['nombre_usuario'], 0, 1)) ?>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-0.5">
+                                Hola, <?= htmlspecialchars(explode(' ', $GLOBALS['nombre_usuario'])[0]) ?>
+                            </h2>
+                            <p class="text-slate-500 text-sm flex items-center gap-1">
+                                <i class="ri-user-smile-line text-blue-500"></i> Panel de Usuario
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="filtrarTablaUsuarioPorEstado('todos')" data-card-u="todos"
+                            class="usuario-stat-card bg-indigo-50 rounded-xl p-3 border border-indigo-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-indigo-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-indigo-600 group-hover:text-indigo-700"><?= $total_creados ?></span>
+                            <span class="text-[10px] uppercase font-bold text-indigo-400">Total</span>
+                            <div
+                                class="mt-1 text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <button onclick="filtrarTablaUsuarioPorEstado('Pendiente')" data-card-u="Pendiente"
+                            class="usuario-stat-card bg-amber-50 rounded-xl p-3 border border-amber-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-amber-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-amber-600 group-hover:text-amber-700"><?= $tickets_abiertos ?></span>
+                            <span class="text-[10px] uppercase font-bold text-amber-400">Pendientes</span>
+                            <div
+                                class="mt-1 text-[9px] text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                        <button onclick="filtrarTablaUsuarioPorEstado('Completo')" data-card-u="Completo"
+                            class="usuario-stat-card bg-emerald-50 rounded-xl p-3 border border-emerald-100 text-center min-w-[90px] cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 group">
+                            <span
+                                class="block text-2xl font-bold text-emerald-600 group-hover:text-emerald-700"><?= $tickets_resueltos ?></span>
+                            <span class="text-[10px] uppercase font-bold text-emerald-400">Resueltos</span>
+                            <div
+                                class="mt-1 text-[9px] text-emerald-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver →</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Tickets Recientes -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        <i class="ri-history-line text-blue-500"></i> Actividad Reciente
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <!-- Buscador compacto -->
+                        <div class="relative">
+                            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="buscadorTicketsUsuario" placeholder="Buscar..."
+                                class="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent bg-white text-slate-700 w-40 transition-all"
+                                onkeyup="filtrarTablaUsuario()">
+                        </div>
+                        <a href="index.php?view=mis_tickets"
+                            class="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors">
+                            Ver Todo
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <table class="min-w-full divide-y divide-slate-100" id="tablaTicketsUsuario">
+                            <thead>
+                                <tr class="bg-slate-50/50">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        ID</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Asunto</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Estado</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Prioridad</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Categoría</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100">
+                                <?php
+                                if (empty($mis_tickets_creados)) {
+                                    echo "<tr><td colspan='6' class='px-6 py-12 text-center text-slate-400'>
+                                        <div class='flex flex-col items-center'>
+                                            <div class='bg-slate-50 p-4 rounded-full mb-3'><i class='ri-ticket-line text-3xl text-slate-300'></i></div>
+                                            <p class='font-medium'>No has creado ningún ticket aún</p>
+                                            <a href='index.php?view=crear_ticket' class='mt-2 text-sm text-blue-600 hover:underline'>Crear mi primer ticket</a>
+                                        </div></td></tr>";
+                                } else {
+                                    $ultimos_tickets = array_slice($mis_tickets_creados, 0, 20);
+                                    foreach ($ultimos_tickets as $t) {
+                                        $status_colors = [
+                                            'Pendiente' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
+                                            'Asignado' => 'bg-blue-50 text-blue-700 ring-blue-600/20',
+                                            'En Atención' => 'bg-purple-50 text-purple-700 ring-purple-600/20',
+                                            'Completo' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+                                            'Resuelto' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+                                            'Cerrado' => 'bg-slate-50 text-slate-700 ring-slate-600/20'
+                                        ];
+                                        $s_class = $status_colors[$t['estado']] ?? 'bg-slate-50 text-slate-700 ring-slate-600/20';
+                                        $prio_colors = [
+                                            'Baja' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+                                            'Media' => 'bg-amber-50 text-amber-700 ring-amber-600/20',
+                                            'Alta' => 'bg-orange-50 text-orange-700 ring-orange-600/20',
+                                            'Critica' => 'bg-rose-50 text-rose-700 ring-rose-600/20'
+                                        ];
+                                        $p_class = $prio_colors[$t['prioridad']] ?? 'bg-slate-50 text-slate-700 ring-slate-600/20';
+
+                                        echo "<tr class='hover:bg-slate-50/80 transition-all duration-200 group cursor-pointer' data-estado='" . htmlspecialchars($t['estado']) . "' onclick=\"window.location.href='index.php?view=editar_ticket&id={$t['id']}'\">";
+                                        echo "<td class='px-4 py-3'><span class='font-mono text-xs font-medium text-slate-400'>#" . str_pad($t['id'], 4, '0', STR_PAD_LEFT) . "</span></td>";
+                                        echo "<td class='px-4 py-3'><div class='text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1'>" . htmlspecialchars($t['titulo']) . "</div><div class='text-xs text-slate-400 mt-0.5'>" . date('d M Y', strtotime($t['fecha_creacion'])) . "</div></td>";
+                                        echo "<td class='px-4 py-3 text-center'><span class='inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {$s_class} gap-1'><span class='w-1.5 h-1.5 rounded-full bg-current'></span>" . htmlspecialchars($t['estado']) . "</span></td>";
+                                        echo "<td class='px-4 py-3 text-center'><span class='inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {$p_class} gap-1'><i class='ri-flag-fill text-[10px]'></i>" . htmlspecialchars($t['prioridad']) . "</span></td>";
+                                        echo "<td class='px-4 py-3 text-xs text-slate-600'>" . htmlspecialchars($t['categoria']) . "</td>";
+                                        echo "<td class='px-4 py-3 text-center'><a href='index.php?view=editar_ticket&id={$t['id']}' class='inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all' title='Ver'><i class='ri-eye-line text-xs'></i></a></td>";
+                                        echo "</tr>";
+                                    }
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <?php
     // -------------------------------------------------------------------------
@@ -2708,4 +4058,121 @@ if ($rol_usuario === 'Admin') {
             setTimeout(cancelarAsignacion, 300);
         }
     </script>
-</div>
+</div><?php if ($rol_usuario === 'Tecnico'): ?>
+    <!-- MODAL AGREGAR /EDITAR HERRAMIENTA -->
+    <div id="modal-add-tool" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm transition-opacity"
+            onclick="document.getElementById('modal-add-tool').classList.add('hidden')"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div
+                    class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg font-semibold leading-6 text-slate-900 mb-4" id="modal-tool-title">Agregar Acción
+                            Rápida</h3>
+                        <form id="form-add-tool" onsubmit="agregarHerramienta(event)">
+                            <input type="hidden" name="id" id="tool_id">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">Nombre</label>
+                                    <input type="text" name="nombre" id="tool_nombre" required placeholder="Ej. Cámaras"
+                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">URL</label>
+                                    <input type="url" name="url" id="tool_url" required placeholder="https://..."
+                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">Icono</label>
+                                    <select name="icono" id="tool_icono"
+                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                                        <option value="ri-link">🔗 Link Generico</option>
+                                        <option value="ri-camera-line">📷 Cámara</option>
+                                        <option value="ri-server-line">🖧 Servidor/Switch</option>
+                                        <option value="ri-microsoft-line">📝 Office 365</option>
+                                        <option value="ri-global-line">🌐 Web</option>
+                                        <option value="ri-printer-line">🖨️ Impresora</option>
+                                        <option value="ri-file-cloud-line">☁️ Cloud</option>
+                                        <option value="ri-shield-check-line">🛡️ Seguridad</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                                <button type="submit"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2">Guardar</button>
+                                <button type="button"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:col-start-1 sm:mt-0"
+                                    onclick="document.getElementById('modal-add-tool').classList.add('hidden')">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openAddToolModal() {
+            document.getElementById('form-add-tool').reset();
+            document.getElementById('tool_id').value = '';
+            document.getElementById('modal-tool-title').textContent = 'Agregar Herramienta';
+            document.getElementById('modal-add-tool').classList.remove('hidden');
+        }
+
+        function editarHerramienta(tool) {
+            document.getElementById('tool_id').value = tool.id;
+            document.getElementById('tool_nombre').value = tool.nombre;
+            document.getElementById('tool_url').value = tool.url;
+            document.getElementById('tool_icono').value = tool.icono;
+            document.getElementById('modal-tool-title').textContent = 'Editar Herramienta';
+            document.getElementById('modal-add-tool').classList.remove('hidden');
+        }
+
+        function agregarHerramienta(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const id = document.getElementById('tool_id').value;
+
+            formData.append('ajax_action', 'manage_tools');
+            formData.append('sub_action', id ? 'edit' : 'add');
+
+            fetch('index.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.msg);
+                    }
+                });
+        }
+
+        function eliminarHerramienta(id, btn) {
+            if (!confirm('¿Eliminar este acceso directo?')) return;
+
+            const formData = new FormData();
+            formData.append('ajax_action', 'manage_tools');
+            formData.append('sub_action', 'delete');
+            formData.append('id', id);
+
+            fetch('index.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        btn.closest('.group\\/item').remove(); // remove row if exists
+                        location.reload(); // safest reload to update layout
+                    } else {
+                        alert('Error');
+                    }
+                });
+        }
+    </script>
+<?php endif; ?>
