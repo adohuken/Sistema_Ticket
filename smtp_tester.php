@@ -6,53 +6,77 @@
 
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['status' => 'error', 'msg' => 'Método no permitido']);
-    exit;
-}
-
-$host = $_POST['host'] ?? '';
-$port = intval($_POST['port'] ?? 587);
-$user = $_POST['username'] ?? '';
-$pass = $_POST['password'] ?? '';
-$enc = $_POST['encryption'] ?? 'tls'; // tls, ssl, or none
-
-// Si la contraseña viene vacía, intentamos leer la guardada
-if (empty($pass)) {
-    $current = require __DIR__ . '/config_mail.php';
-    if ($current['username'] === $user) {
-        $pass = $current['password'];
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_COMPILE_ERROR)) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'msg' => 'Error fatal PHP: ' . $error['message']]);
     }
-}
-
-if (empty($host) || empty($user) || empty($pass)) {
-    echo json_encode(['status' => 'error', 'msg' => 'Faltan datos de configuración']);
-    exit;
-}
+});
 
 try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new Exception('Método no permitido');
+    }
+
+    $host = trim($_POST['host'] ?? '');
+    $port = intval($_POST['port'] ?? 587);
+    $user = trim($_POST['username'] ?? '');
+    // Si la contraseña viene vacía, intentamos leer la guardada
+    $pass = $_POST['password'] ?? '';
+    if (empty($pass)) {
+        $config_path = __DIR__ . '/config_mail.php';
+        if (file_exists($config_path)) {
+            $current = require $config_path;
+            $saved_user = trim($current['username'] ?? '');
+
+            // Comparación robusta: ignorar mayúsculas y espacios
+            if (strtolower($saved_user) === strtolower($user)) {
+                $pass = $current['password'] ?? '';
+            } else {
+                error_log("SMTP Tester: No coincide usuario. POST: '$user' vs Saved: '$saved_user'");
+            }
+        }
+    }
+
+    $enc = $_POST['encryption'] ?? 'tls';
+
+    if (empty($host) || empty($user) || empty($pass)) {
+        $missing = [];
+        if (empty($host))
+            $missing[] = 'Host';
+        if (empty($user))
+            $missing[] = 'Usuario';
+        if (empty($pass))
+            $missing[] = 'Contraseña';
+
+        throw new Exception('Faltan datos de configuración: ' . implode(', ', $missing) . '. Si dejó la contraseña vacía, verifique que el usuario sea idéntico al guardado.');
+    }
+
     $protocol = '';
     if ($enc === 'ssl')
         $protocol = 'ssl://';
 
     // 1. Conexión Socket
-    $socket = fsockopen($protocol . $host, $port, $errno, $errstr, 10);
+    $socket = @fsockopen($protocol . $host, $port, $errno, $errstr, 10);
     if (!$socket) {
-        throw new Exception("No se pudo conectar al host: $errstr ($errno)");
+        throw new Exception("No se pudo conectar al host ($host:$port): $errstr ($errno)");
     }
 
     // Helper para leer/escribir
-    function smtp_cmd($socket, $cmd = null)
-    {
-        if ($cmd)
-            fwrite($socket, $cmd . "\r\n");
-        $response = '';
-        while (($line = fgets($socket, 515)) !== false) {
-            $response .= $line;
-            if (substr($line, 3, 1) == ' ')
-                break;
+    if (!function_exists('smtp_cmd')) {
+        function smtp_cmd($socket, $cmd = null)
+        {
+            if ($cmd)
+                fwrite($socket, $cmd . "\r\n");
+            $response = '';
+            while (($line = fgets($socket, 515)) !== false) {
+                $response .= $line;
+                if (substr($line, 3, 1) == ' ')
+                    break;
+            }
+            return $response;
         }
-        return $response;
     }
 
     $resp = smtp_cmd($socket); // Banner inicial
@@ -60,7 +84,7 @@ try {
         throw new Exception("Respuesta inválida servidor: $resp");
 
     // HELO/EHLO
-    $helo = smtp_cmd($socket, 'EHLO ' . $_SERVER['SERVER_NAME']);
+    $helo = smtp_cmd($socket, 'EHLO ' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
 
     // STARTTLS
     if ($enc === 'tls') {
@@ -72,7 +96,7 @@ try {
             throw new Exception("Fallo al negociar encriptación TLS");
         }
         // Re-enviar EHLO tras TLS
-        smtp_cmd($socket, 'EHLO ' . $_SERVER['SERVER_NAME']);
+        smtp_cmd($socket, 'EHLO ' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
     }
 
     // AUTH LOGIN

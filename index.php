@@ -6,6 +6,63 @@ ob_start(); // Capturar cualquier output no deseado
 // HANDLER AJAX EXCLUSIVO - AL INICIO ABSOLUTO
 // ============================================
 
+// [POLLING] Handler ligero para verificar nuevas notificaciones (Técnicos y todos los roles)
+if (isset($_GET['action']) && $_GET['action'] === 'check_notifs') {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    require_once __DIR__ . '/conexion.php';
+    if (!isset($_SESSION['usuario_id'])) {
+        echo json_encode(['count' => 0, 'latest' => null]);
+        exit;
+    }
+    try {
+        $uid = $_SESSION['usuario_id'];
+        $stmt_c = $pdo->prepare("SELECT COUNT(*) FROM notificaciones WHERE usuario_id = ? AND leida = 0");
+        $stmt_c->execute([$uid]);
+        $count = (int) $stmt_c->fetchColumn();
+
+        $latest = null;
+        if ($count > 0) {
+            $stmt_l = $pdo->prepare("SELECT id, titulo, mensaje, tipo FROM notificaciones WHERE usuario_id = ? AND leida = 0 ORDER BY created_at DESC LIMIT 1");
+            $stmt_l->execute([$uid]);
+            $latest = $stmt_l->fetch(PDO::FETCH_ASSOC);
+        }
+        echo json_encode(['count' => $count, 'latest' => $latest]);
+    } catch (Exception $e) {
+        echo json_encode(['count' => 0, 'latest' => null]);
+    }
+    exit;
+}
+
+// [AJAX] Marcar notificación como leída (handler temprano — no requiere cargar toda la página)
+if (isset($_POST['accion']) && $_POST['accion'] === 'marcar_notificacion') {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    require_once __DIR__ . '/conexion.php';
+
+    if (!isset($_SESSION['usuario_id'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'No autenticado']);
+        exit;
+    }
+
+    try {
+        $notif_id = $_POST['id'] ?? '';
+        $uid = $_SESSION['usuario_id'];
+
+        if ($notif_id === 'todas') {
+            $pdo->prepare("UPDATE notificaciones SET leida = 1 WHERE usuario_id = ?")->execute([$uid]);
+        } else {
+            $pdo->prepare("UPDATE notificaciones SET leida = 1 WHERE id = ? AND usuario_id = ?")->execute([$notif_id, $uid]);
+        }
+        echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
 // [NUEVO] Handler para gestión de permisos de usuario (AJAX)
 if (isset($_GET['action']) && $_GET['action'] === 'get_user_perms') {
     ob_end_clean();
@@ -26,6 +83,70 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_user_perms') {
         echo json_encode($perms);
     } catch (Exception $e) {
         echo json_encode([]);
+    }
+    exit;
+}
+
+// [NUEVO] Handler para gestión de Herramientas de Técnico (AJAX)
+if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'manage_tools') {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    require_once __DIR__ . '/conexion.php';
+
+    if (!isset($_SESSION['usuario_id'])) {
+        echo json_encode(['status' => 'error', 'msg' => 'Sesión expirada']);
+        exit;
+    }
+
+    $sub_action = $_POST['sub_action'] ?? '';
+    $user_id = $_SESSION['usuario_id'];
+
+    if ($sub_action === 'add') {
+        $nombre = $_POST['nombre'] ?? '';
+        $url = $_POST['url'] ?? '';
+        $icono = $_POST['icono'] ?? 'ri-link';
+
+        if (empty($nombre) || empty($url)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Datos incompletos']);
+            exit;
+        }
+
+        try {
+            $stmt = $pdo->prepare("INSERT INTO herramientas_tecnico (usuario_id, nombre, url, icono) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$user_id, $nombre, $url, $icono]);
+            echo json_encode(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 'error', 'msg' => 'Error BD: ' . $e->getMessage()]);
+        }
+
+    } elseif ($sub_action === 'edit') {
+        $id_tool = $_POST['id'] ?? 0;
+        $nombre = $_POST['nombre'] ?? '';
+        $url = $_POST['url'] ?? '';
+        $icono = $_POST['icono'] ?? 'ri-link';
+
+        if (empty($nombre) || empty($url)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Datos incompletos']);
+            exit;
+        }
+
+        try {
+            $stmt = $pdo->prepare("UPDATE herramientas_tecnico SET nombre = ?, url = ?, icono = ? WHERE id = ? AND usuario_id = ?");
+            $stmt->execute([$nombre, $url, $icono, $id_tool, $user_id]);
+            echo json_encode(['status' => 'success']);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 'error', 'msg' => 'Error BD']);
+        }
+
+    } elseif ($sub_action === 'delete') {
+        $id_tool = $_POST['id'] ?? 0;
+        try {
+            $stmt = $pdo->prepare("DELETE FROM herramientas_tecnico WHERE id = ? AND usuario_id = ?");
+            $stmt->execute([$id_tool, $user_id]);
+            echo json_encode(['status' => 'success']);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 'error', 'msg' => 'Error BD']);
+        }
     }
     exit;
 }
@@ -188,6 +309,12 @@ $GLOBALS['colores_badges_map'] = [
 require_once __DIR__ . '/conexion.php';
 require_once __DIR__ . '/security_utils.php';
 require_once __DIR__ . '/auth_utils.php';
+
+// [NEW] Controladores
+$usuario_id = $_SESSION['usuario_id'] ?? null;
+$rol_usuario = $_SESSION['usuario_rol'] ?? null;
+
+require_once __DIR__ . '/controllers/mantenimiento_controller.php';
 
 
 // ============================================
@@ -462,17 +589,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Preparar valores nulos para empresa/sucursal si están vacíos
                 $empresa = !empty($_POST['empresa_id']) ? $_POST['empresa_id'] : null;
                 $sucursal = !empty($_POST['sucursal_id']) ? $_POST['sucursal_id'] : null;
+                $empresa_asignada_nueva = !empty($_POST['empresa_asignada']) ? $_POST['empresa_asignada'] : null;
 
-                $stmt = $pdo->prepare("INSERT INTO usuarios (nombre_completo, email, password, rol_id, empresa_id, sucursal_id) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO usuarios (nombre_completo, email, password, rol_id, empresa_id, sucursal_id, empresa_asignada) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
                     $_POST['nombre_usuario'],
                     $_POST['email_usuario'],
                     $password_hash,
                     $_POST['rol_usuario'],
                     $empresa,
-                    $sucursal
+                    $sucursal,
+                    $empresa_asignada_nueva
                 ]);
                 $nuevo_user_id = $pdo->lastInsertId();
+
 
                 // Procesar Permisos de Acceso Múltiple (RRHH)
                 if (isset($_POST['permisos_sucursal']) && is_array($_POST['permisos_sucursal'])) {
@@ -516,27 +646,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $user_id_edit = $_POST['usuario_id'];
 
                 // Actualizar datos básicos
+                $empresa_asignada_edit = !empty($_POST['empresa_asignada']) ? $_POST['empresa_asignada'] : null;
+
                 if (!empty($_POST['password'])) {
                     // Si se proporcionó nueva contraseña
                     $password_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, password = ?, rol_id = ? WHERE id = ?");
+                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, password = ?, rol_id = ?, empresa_asignada = ? WHERE id = ?");
                     $stmt->execute([
                         $_POST['nombre_usuario'],
                         $_POST['email'],
                         $password_hash,
                         $_POST['rol'],
+                        $empresa_asignada_edit,
                         $user_id_edit
                     ]);
                 } else {
                     // Sin cambio de contraseña
-                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, rol_id = ? WHERE id = ?");
+                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, rol_id = ?, empresa_asignada = ? WHERE id = ?");
                     $stmt->execute([
                         $_POST['nombre_usuario'],
                         $_POST['email'],
                         $_POST['rol'],
+                        $empresa_asignada_edit,
                         $user_id_edit
                     ]);
                 }
+
 
                 // Actualizar permisos de sucursales (RRHH)
                 // 1. Borrar permisos existentes
@@ -597,14 +732,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Notificar al técnico
                 try {
-                    $stmt_notif = $pdo->prepare("INSERT INTO notificaciones (usuario_id, titulo, mensaje, tipo, enlace) VALUES (?, ?, ?, 'info', ?)");
+                    // Obtener título del ticket para mensaje más descriptivo
+                    $stmt_tkt = $pdo->prepare("SELECT titulo FROM tickets WHERE id = ?");
+                    $stmt_tkt->execute([$_POST['ticket_id']]);
+                    $titulo_ticket = $stmt_tkt->fetchColumn() ?: 'Sin título';
+
+                    // Obtener nombre del admin que asigna
+                    $stmt_adm = $pdo->prepare("SELECT nombre_completo FROM usuarios WHERE id = ?");
+                    $stmt_adm->execute([$usuario_id]);
+                    $nombre_admin = $stmt_adm->fetchColumn() ?: 'el administrador';
+
+                    $stmt_notif = $pdo->prepare("INSERT INTO notificaciones (usuario_id, titulo, mensaje, tipo, enlace) VALUES (?, ?, ?, 'warning', ?)");
                     $stmt_notif->execute([
                         $_POST['tecnico_id'],
-                        "Nuevo Ticket Asignado",
-                        "Se te ha asignado el ticket #{$_POST['ticket_id']}. Por favor revísalo.",
-                        "index.php?view=mis_tickets"
+                        "🎫 Nuevo Ticket Asignado #" . $_POST['ticket_id'],
+                        "Se te asignó el ticket: \"{$titulo_ticket}\". Asignado por: {$nombre_admin}.",
+                        "index.php?view=asignados"
                     ]);
                 } catch (Exception $ex) {
+                }
+
+                // [EMAIL] Alerta: Ticket Asignado al técnico
+                try {
+                    require_once __DIR__ . '/enviar_notificacion_email.php';
+                    $stmt_alert_cfg = $pdo->query("SELECT clave, valor FROM configuracion_sistema WHERE clave IN ('alert_email_ticket_asignado', 'alert_email_ticket_reasignado')");
+                    $alert_vals = [];
+                    foreach ($stmt_alert_cfg->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                        $alert_vals[$row['clave']] = $row['valor'];
+                    }
+
+                    if (!empty($alert_vals['alert_email_ticket_asignado'])) {
+                        $stmt_tec = $pdo->prepare("SELECT email, nombre_completo FROM usuarios WHERE id = ?");
+                        $stmt_tec->execute([$_POST['tecnico_id']]);
+                        $tec = $stmt_tec->fetch();
+                        if ($tec && !empty($tec['email'])) {
+                            $cuerpo = "Hola <strong>{$tec['nombre_completo']}</strong>,<br><br>"
+                                . "Se te ha asignado el siguiente ticket:<br><br>"
+                                . "<strong>Ticket:</strong> #{$_POST['ticket_id']} — " . htmlspecialchars($titulo_ticket) . "<br>"
+                                . "<strong>Asignado por:</strong> " . htmlspecialchars($nombre_admin);
+                            $html = emailAlertaHTML(
+                                '🎫 Nuevo Ticket Asignado',
+                                $cuerpo,
+                                'Ver Ticket',
+                                'index.php?view=asignados'
+                            );
+                            enviarAlertaEmail($tec['email'], "Ticket Asignado #{$_POST['ticket_id']}", $html);
+                        }
+                    }
+                } catch (Exception $ex_mail) {
+                    error_log("Email alerta asignacion: " . $ex_mail->getMessage());
                 }
             } catch (PDOException $e) {
                 $mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al asignar: " . $e->getMessage() . "</div>";
@@ -623,15 +799,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $usuario_id
                 ]);
 
-                // Notificación Email (Nuevo Ticket)
-                require_once __DIR__ . '/mailer_utils.php';
-                $asunto = "Nuevo Ticket #$ticket_id - " . substr($_POST['titulo'], 0, 50);
-                $mensaje_mail = "<p>Se ha creado un nuevo ticket con prioridad <strong>" . htmlspecialchars($_POST['prioridad']) . "</strong></p>";
-                $mensaje_mail .= "<p><strong>Título:</strong> " . htmlspecialchars($_POST['titulo']) . "</p>";
-                $mensaje_mail .= "<p><strong>Descripción:</strong> " . nl2br(htmlspecialchars($_POST['descripcion'])) . "</p>";
+                $new_ticket_id = $pdo->lastInsertId();
 
-                $config = require __DIR__ . '/config_mail.php';
-                enviar_notificacion($config['admin_email'], $asunto, $mensaje_mail);
+                // [EMAIL] Alerta: Ticket Nuevo al admin destino
+                try {
+                    require_once __DIR__ . '/enviar_notificacion_email.php';
+                    $stmt_ac3 = $pdo->query("SELECT clave, valor FROM configuracion_sistema WHERE clave IN ('alert_email_ticket_nuevo', 'alert_email_admin_destino')");
+                    $alv3 = [];
+                    foreach ($stmt_ac3->fetchAll(PDO::FETCH_ASSOC) as $r) {
+                        $alv3[$r['clave']] = $r['valor'];
+                    }
+                    if (!empty($alv3['alert_email_ticket_nuevo']) && !empty($alv3['alert_email_admin_destino'])) {
+                        $cuerpo_nuevo = "Se ha creado un nuevo ticket en el sistema:<br><br>"
+                            . "<strong>Ticket:</strong> #{$new_ticket_id} — " . htmlspecialchars($_POST['titulo_ticket']) . "<br>"
+                            . "<strong>Prioridad:</strong> " . htmlspecialchars($_POST['prioridad']);
+                        $html_nuevo = emailAlertaHTML(
+                            '📩 Nuevo Ticket Creado',
+                            $cuerpo_nuevo,
+                            'Ver Ticket',
+                            'index.php?view=seguimiento'
+                        );
+                        enviarAlertaEmail($alv3['alert_email_admin_destino'], "Nuevo Ticket #{$new_ticket_id}", $html_nuevo);
+                    }
+                } catch (Exception $ex_mail3) {
+                    error_log("Email alerta nuevo ticket: " . $ex_mail3->getMessage());
+                }
 
                 $mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Ticket creado exitosamente.</div>";
                 registrar_actividad("Crear Ticket", "Ticket creado: " . $_POST['titulo_ticket'], $pdo);
@@ -725,6 +917,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     } catch (Exception $ex) {
                     }
+                }
+
+                // [EMAIL] Alerta: Ticket Completo/Cerrado
+                try {
+                    if ($_POST['nuevo_estado'] === 'Completo') {
+                        require_once __DIR__ . '/enviar_notificacion_email.php';
+                        $stmt_ac2 = $pdo->query("SELECT valor FROM configuracion_sistema WHERE clave = 'alert_email_ticket_cerrado' LIMIT 1");
+                        $alert_cerrado = $stmt_ac2 ? $stmt_ac2->fetchColumn() : '0';
+                        if ($alert_cerrado === '1') {
+                            // Obtener email del creador
+                            $stmt_cr = $pdo->prepare("
+                                SELECT u.email, u.nombre_completo, t.titulo
+                                FROM tickets t
+                                JOIN usuarios u ON u.id = t.creador_id
+                                WHERE t.id = ?
+                            ");
+                            $stmt_cr->execute([$_POST['ticket_id']]);
+                            $cr = $stmt_cr->fetch();
+                            if ($cr && !empty($cr['email'])) {
+                                $cuerpo_cierre = "Hola <strong>{$cr['nombre_completo']}</strong>,<br><br>"
+                                    . "Tu ticket ha sido marcado como <strong>Completo</strong>:<br><br>"
+                                    . "<strong>Ticket:</strong> #{$_POST['ticket_id']} — " . htmlspecialchars($cr['titulo']);
+                                if (!empty($_POST['comentarios_resolucion'])) {
+                                    $cuerpo_cierre .= "<br><br><strong>Nota de cierre:</strong> "
+                                        . nl2br(htmlspecialchars($_POST['comentarios_resolucion']));
+                                }
+                                $html_cierre = emailAlertaHTML(
+                                    '✅ Tu Ticket ha sido Resuelto',
+                                    $cuerpo_cierre,
+                                    'Ver Ticket',
+                                    'index.php?view=mis_tickets'
+                                );
+                                enviarAlertaEmail($cr['email'], "Ticket #{$_POST['ticket_id']} Resuelto", $html_cierre);
+                            }
+                        }
+                    }
+                } catch (Exception $ex_mail2) {
+                    error_log("Email alerta cierre: " . $ex_mail2->getMessage());
                 }
 
                 $mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>✓ $accion_msg.</div>";
@@ -980,7 +1210,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Cuenta 365 actualizada exitosamente.</div>";
                     registrar_actividad("Editar Cuenta 365", "ID: " . $_POST['id'], $pdo);
                     $_SESSION['mensaje_exito'] = "Cuenta 365 actualizada exitosamente.";
-                    header("Location: index.php?view=registros_365");
+                    $redirect_view = $_POST['redirect_view'] ?? 'registros_365';
+                    header("Location: index.php?view=" . $redirect_view);
                     exit;
 
                 } elseif ($_POST['accion'] === 'eliminar_registro_365') {
@@ -995,121 +1226,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+
+
         // 5.6 Control Mantenimiento
-        if (isset($_POST['accion']) && (strpos($_POST['accion'], '_mantenimiento') !== false || $_POST['accion'] === 'programar_masivo') && ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin' || $rol_usuario === 'Tecnico')) {
-            try {
-                if ($_POST['accion'] === 'registrar_mantenimiento') {
-                    $equipo_id = $_POST['equipo_id'];
-                    $tipo = $_POST['tipo_mantenimiento'];
-                    $fecha_inicio = $_POST['fecha_inicio'];
-                    $problema = $_POST['descripcion_problema'];
-                    $prioridad = $_POST['prioridad'] ?? 'Media';
-                    $estado = $_POST['estado'] ?? 'Programado';
-                    $checklist = isset($_POST['checklist']) ? json_encode($_POST['checklist']) : null;
-
-                    $sql = "INSERT INTO mantenimiento_equipos (equipo_id, tipo_mantenimiento, fecha_inicio, descripcion_problema, prioridad, estado, registrado_por, checklist) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([$equipo_id, $tipo, $fecha_inicio, $problema, $prioridad, $estado, $usuario_id, $checklist]);
-
-                    $_SESSION['mensaje'] = "Mantenimiento registrado correctamente.";
-                    $_SESSION['tipo_mensaje'] = "success";
-                    registrar_actividad("Registrar Mantenimiento", "Equipo ID: " . $equipo_id, $pdo);
-
-                } elseif ($_POST['accion'] === 'actualizar_mantenimiento') {
-                    $id = $_POST['id'];
-                    $tipo = $_POST['tipo_mantenimiento'];
-                    $fecha_inicio = $_POST['fecha_inicio'];
-                    $fecha_fin = $_POST['fecha_fin'] ?? null;
-                    $problema = $_POST['descripcion_problema'];
-                    $solucion = $_POST['descripcion_solucion'] ?? '';
-                    $costo = $_POST['costo'] ?? 0;
-                    $prioridad = $_POST['prioridad'] ?? 'Media';
-                    $estado = $_POST['estado'];
-                    $checklist = isset($_POST['checklist']) ? json_encode($_POST['checklist']) : null;
-
-                    // Si se completa o cancela
-                    if (($estado === 'Completado' || $estado === 'Cancelado') && empty($fecha_fin)) {
-                        $fecha_fin = date('Y-m-d H:i:s');
-                    }
-
-                    $sql = "UPDATE mantenimiento_equipos SET tipo_mantenimiento=?, fecha_inicio=?, fecha_fin=?, descripcion_problema=?, descripcion_solucion=?, costo=?, prioridad=?, estado=?, checklist=? WHERE id=?";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([$tipo, $fecha_inicio, $fecha_fin, $problema, $solucion, $costo, $prioridad, $estado, $checklist, $id]);
-
-                    $_SESSION['mensaje'] = "Mantenimiento actualizado.";
-                    $_SESSION['tipo_mensaje'] = "success";
-                    registrar_actividad("Actualizar Mantenimiento", "ID: " . $id, $pdo);
-
-                } elseif ($_POST['accion'] === 'guardar_reporte_masivo') {
-                    $visita_id = $_POST['visita_id'];
-                    $equipos = $_POST['equipos']; // Array
-                    $fecha_hoy = date('Y-m-d');
-
-                    $count = 0;
-                    if (is_array($equipos)) {
-                        $sql_ins = "INSERT INTO mantenimiento_equipos (equipo_id, tipo_mantenimiento, fecha_inicio, fecha_fin, descripcion_problema, descripcion_solucion, estado, registrado_por, prioridad) 
-                                    VALUES (?, 'Preventivo', ?, ?, ?, ?, ?, ?, 'Media')";
-                        $stmt_ins = $pdo->prepare($sql_ins);
-
-                        foreach ($equipos as $eq) {
-                            // Solo procesar si el checkbox "seleccionado" fue marcado
-                            if (isset($eq['seleccionado'])) {
-                                $estado_eq = $eq['estado'];
-                                $notas = $eq['notas'];
-                                $desc_prob = "Mantenimiento Masivo (Visita #$visita_id)";
-
-                                // Determinar fecha fin
-                                $fecha_fin = ($estado_eq == 'Completado') ? date('Y-m-d H:i:s') : null;
-
-                                $stmt_ins->execute([$eq['id'], $fecha_hoy, $fecha_fin, $desc_prob, $notas, $estado_eq, $usuario_id]);
-                                $count++;
-                            }
-                        }
-                    }
-
-                    // Actualizar Visita
-                    $stmt_upd = $pdo->prepare("UPDATE mantenimiento_solicitudes SET estado = 'Completado' WHERE id = ?");
-                    $stmt_upd->execute([$visita_id]);
-
-                    $_SESSION['mensaje'] = "Visita finalizada. Se generaron $count reportes individuales en el historial.";
-                    $_SESSION['tipo_mensaje'] = "success";
-                    registrar_actividad("Finalizar Visita Masiva", "ID: $visita_id", $pdo);
-
-                } elseif ($_POST['accion'] === 'crear_solicitud_masiva') {
-                    $sucursal_id = $_POST['sucursal_id'];
-                    $empresa_id = $_POST['empresa_id'] ?? null;
-                    $fecha = $_POST['fecha_inicio'];
-                    // Obtener nombres para titulos bonitos
-                    if ($sucursal_id) {
-                        $stmt_suc = $pdo->prepare("SELECT nombre FROM sucursales WHERE id = ?");
-                        $stmt_suc->execute([$sucursal_id]);
-                        $nom = $stmt_suc->fetchColumn();
-                        $titulo = "Visita Mantenimiento: $nom";
-                    } else {
-                        $titulo = "Visita Mantenimiento: Empresa Global";
-                    }
-                    $desc = $_POST['descripcion_masiva'];
-
-                    $sql = "INSERT INTO mantenimiento_solicitudes (empresa_id, sucursal_id, fecha_programada, titulo, descripcion, asignado_a, estado) VALUES (?, ?, ?, ?, ?, ?, 'Pendiente')";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([$empresa_id, $sucursal_id, $fecha, $titulo, $desc, $usuario_id]);
-
-                    $_SESSION['mensaje'] = "Solicitud de Visita creada. Gestiónala en la pestaña 'Visitas Programadas'.";
-                    $_SESSION['tipo_mensaje'] = "success";
-                    registrar_actividad("Crear Solicitud Visita", $titulo, $pdo);
-                }
-
-                header("Location: index.php?view=mantenimiento_equipos&tab=tickets");
-                exit;
-
-            } catch (PDOException $e) {
-                $_SESSION['mensaje'] = "Error: " . $e->getMessage();
-                $_SESSION['tipo_mensaje'] = "error";
-                header("Location: index.php?view=mantenimiento_equipos&tab=tickets");
-                exit;
-            }
-        }
+        require_once __DIR__ . '/controllers/mantenimiento_controller.php';
 
         // 6. Registrar Salida (RRHH)
         if (isset($_POST['accion']) && $_POST['accion'] === 'registrar_salida' && ($rol_usuario === 'RRHH' || $rol_usuario === 'SuperAdmin')) {
@@ -1420,6 +1540,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // 8.5.2 Configuración: Guardar Alertas de Correo
+        if (isset($_POST['accion']) && $_POST['accion'] === 'guardar_config_alertas_email' && $rol_usuario === 'SuperAdmin') {
+            try {
+                $alertas = [
+                    'alert_email_ticket_asignado' => 'Email al técnico cuando se le asigna un ticket',
+                    'alert_email_ticket_reasignado' => 'Email al técnico cuando se le reasigna un ticket',
+                    'alert_email_ticket_cerrado' => 'Email al solicitante cuando su ticket se cierra',
+                    'alert_email_ticket_nuevo' => 'Email al admin cuando entra un ticket nuevo',
+                ];
+
+                $stmt_upsert = $pdo->prepare("
+                    INSERT INTO configuracion_sistema (clave, valor, descripcion)
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+                ");
+
+                foreach ($alertas as $clave => $desc) {
+                    $valor = isset($_POST[$clave]) ? '1' : '0';
+                    $stmt_upsert->execute([$clave, $valor, $desc]);
+                }
+
+                // Guardar email admin destino y email from
+                foreach (['alert_email_admin_destino', 'alert_email_from'] as $campo) {
+                    $val = trim($_POST[$campo] ?? '');
+                    $desc_campo = $campo === 'alert_email_admin_destino' ? 'Email del admin receptor de tickets nuevos' : 'Dirección De: para alertas de correo';
+                    $stmt_upsert->execute([$campo, $val, $desc_campo]);
+                }
+
+                registrar_actividad("Configuración", "Alertas de correo actualizadas", $pdo);
+
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                    while (ob_get_level())
+                        ob_end_clean();
+                    header('Content-Type: application/json');
+                    echo json_encode(['status' => 'success', 'msg' => 'Configuración guardada']);
+                    exit;
+                }
+                $mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>✓ Configuración de alertas de correo guardada.</div>";
+            } catch (Exception $e) {
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                    while (ob_get_level())
+                        ob_end_clean();
+                    header('Content-Type: application/json');
+                    echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
+                    exit;
+                }
+                $mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error: " . $e->getMessage() . "</div>";
+            }
+        }
+
         // 8.6 Configuración: Guardar Contenido de Actas
         if (isset($_POST['accion']) && $_POST['accion'] === 'guardar_contenido_actas' && $rol_usuario === 'SuperAdmin') {
             try {
@@ -1516,7 +1686,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 $new_ticket_id = $pdo->lastInsertId();
 
-                $mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>✓ Solicitud enviada correctamente. Ticket #$new_ticket_id creado.</div>";
+                // [NEW] 4. Registrar en Formularios RRHH (Para generar Acta)
+                // Reutilizamos columnas:
+                // nombre_colaborador -> beneficiario
+                // cargo_zona -> departamento
+                // detalle_licencias -> tipo_licencia
+                // otras_indicaciones -> justificacion
+                $sql_form = "INSERT INTO formularios_rrhh (tipo, fecha_solicitud, nombre_colaborador, cargo_zona, detalle_licencias, otras_indicaciones, creado_por) VALUES ('Licencia', NOW(), ?, ?, ?, ?, ?)";
+                $stmt_form = $pdo->prepare($sql_form);
+                $stmt_form->execute([
+                    $beneficiario,
+                    $departamento,
+                    $tipo_licencia,
+                    $justificacion,
+                    $usuario_id
+                ]);
+                $form_id = $pdo->lastInsertId();
+
+                $mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>✓ Solicitud enviada correctamente. Ticket #$new_ticket_id y registro #$form_id creados.</div>";
                 registrar_actividad("Solicitud Licencia", "Ticket $new_ticket_id creado para $beneficiario", $pdo);
 
             } catch (PDOException $e) {
@@ -1988,6 +2175,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Content-Type: application/json');
                 http_response_code(500);
                 echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+                exit;
+            }
+        }
+
+        // 16b. Enviar Notificación (Admin)
+        if (isset($_POST['accion']) && $_POST['accion'] === 'enviar_notificacion_admin' && in_array($rol_usuario, ['Admin', 'SuperAdmin'])) {
+            try {
+                $destinatario_id = $_POST['destinatario_id'] ?? '';
+                $tipo_notif = in_array($_POST['tipo'] ?? '', ['info', 'success', 'warning', 'error']) ? $_POST['tipo'] : 'info';
+                $titulo_notif = trim($_POST['titulo'] ?? '');
+                $mensaje_notif = trim($_POST['mensaje'] ?? '');
+                $enlace_notif = trim($_POST['enlace'] ?? '') ?: null;
+
+                if (empty($titulo_notif) || empty($mensaje_notif)) {
+                    throw new Exception('El título y el mensaje son obligatorios.');
+                }
+
+                $enviados = 0;
+                if ($destinatario_id === 'todos') {
+                    // Enviar a todos los usuarios
+                    $stmt_ids = $pdo->query("SELECT id FROM usuarios");
+                    $ids_usuarios = $stmt_ids->fetchAll(PDO::FETCH_COLUMN);
+                    $stmt_notif = $pdo->prepare("INSERT INTO notificaciones (usuario_id, titulo, mensaje, tipo, enlace) VALUES (?, ?, ?, ?, ?)");
+                    foreach ($ids_usuarios as $uid) {
+                        $stmt_notif->execute([$uid, $titulo_notif, $mensaje_notif, $tipo_notif, $enlace_notif]);
+                        $enviados++;
+                    }
+                } else {
+                    $stmt_notif = $pdo->prepare("INSERT INTO notificaciones (usuario_id, titulo, mensaje, tipo, enlace) VALUES (?, ?, ?, ?, ?)");
+                    $stmt_notif->execute([intval($destinatario_id), $titulo_notif, $mensaje_notif, $tipo_notif, $enlace_notif]);
+                    $enviados = 1;
+                }
+
+                registrar_actividad("Notificación Admin", "Enviada a $enviados usuario(s): $titulo_notif", $pdo);
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'success', 'msg' => "Notificación enviada a $enviados usuario(s)."]);
+                exit;
+            } catch (Exception $e) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
                 exit;
             }
         }
@@ -2939,6 +3166,10 @@ switch ($view) {
 
 
     // Duplicates removed
+
+    case 'notificaciones':
+        include __DIR__ . '/seccion_notificaciones.php';
+        break;
 
     default:
         echo "<div class='p-6'>Vista no encontrada.</div>";

@@ -225,8 +225,24 @@ $prefs = $stmt_prefs->fetch(PDO::FETCH_ASSOC) ?: ['notifs_email' => 0, 'notifs_s
             function probarConexionSMTP() {
                 const btn = document.querySelector('button[onclick="probarConexionSMTP()"]');
                 const originalText = btn.innerHTML;
-                const form = btn.closest('form');
+                const form = btn.closest('form'); 
+                
+                if (!form) {
+                    alert('Error interno: No se encontró el formulario de configuración.');
+                    return;
+                }
+
                 const formData = new FormData(form);
+                
+                // Debug: Check what's being sent
+                console.log('Sending SMTP Test Data:');
+                for (let [key, value] of formData.entries()) {
+                    if (key === 'password') {
+                        console.log(key, value ? '(***)' : '(empty)');
+                    } else {
+                        console.log(key, value);
+                    }
+                }
                 
                 btn.disabled = true;
                 btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Probando...';
@@ -237,18 +253,166 @@ $prefs = $stmt_prefs->fetch(PDO::FETCH_ASSOC) ?: ['notifs_email' => 0, 'notifs_s
                 })
                 .then(r => r.json())
                 .then(data => {
+                    console.log('SMTP Test Response:', data);
                     if (data.status === 'success') {
-                         Swal.fire('¡Éxito!', data.msg, 'success');
+                         if (typeof Swal !== 'undefined') {
+                             Swal.fire('¡Éxito!', data.msg, 'success');
+                         } else {
+                             alert('¡Éxito! ' + data.msg);
+                         }
                     } else {
-                         Swal.fire('Error de Conexión', data.msg, 'error');
+                         if (typeof Swal !== 'undefined') {
+                             Swal.fire('Error de Conexión', data.msg, 'error');
+                         } else {
+                             alert('Error de Conexión: ' + data.msg);
+                         }
                     }
                 })
                 .catch(err => {
-                    Swal.fire('Error', 'No se pudo contactar con el script de prueba', 'error');
+                    console.error('SMTP Test Error:', err);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Error', 'No se pudo contactar con el script de prueba (revisar consola)', 'error');
+                    } else {
+                        alert('Error: No se pudo contactar con el script de prueba (revisar consola)');
+                    }
                 })
                 .finally(() => {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
+                });
+            }
+            </script>
+
+            <!-- Alertas por Correo -->
+            <?php
+            // Leer configuración de alertas desde BD
+            $alertas_keys = [
+                'alert_email_ticket_asignado', 'alert_email_ticket_reasignado',
+                'alert_email_ticket_cerrado', 'alert_email_ticket_nuevo',
+                'alert_email_admin_destino', 'alert_email_from'
+            ];
+            $stmt_alertas = $pdo->prepare(
+                "SELECT clave, valor FROM configuracion_sistema WHERE clave IN (" .
+                implode(',', array_fill(0, count($alertas_keys), '?')) . ")"
+            );
+            $stmt_alertas->execute($alertas_keys);
+            $alert_cfg = [];
+            while ($row = $stmt_alertas->fetch(PDO::FETCH_ASSOC)) {
+                $alert_cfg[$row['clave']] = $row['valor'];
+            }
+            ?>
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 lg:col-span-2">
+                <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                    <i class="ri-mail-settings-line text-indigo-500"></i>
+                    Alertas por Correo
+                </h3>
+                <p class="text-sm text-slate-500 mb-6">Activa notificaciones automáticas por email para los eventos del sistema. Requiere configuración SMTP válida.</p>
+
+                <form id="form-alertas-email" class="space-y-0">
+                    <input type="hidden" name="accion" value="guardar_config_alertas_email">
+
+                    <!-- Toggles de eventos -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                        <?php
+                        $eventos = [
+                            'alert_email_ticket_asignado'  => ['icon' => 'ri-user-received-line',  'color' => 'blue',   'titulo' => 'Ticket Asignado',    'desc' => 'El técnico recibe un email cuando se le asigna un ticket'],
+                            'alert_email_ticket_reasignado'=> ['icon' => 'ri-refresh-line',         'color' => 'violet', 'titulo' => 'Ticket Reasignado',  'desc' => 'El técnico recibe un email cuando se le reasigna un ticket'],
+                            'alert_email_ticket_cerrado'   => ['icon' => 'ri-checkbox-circle-line', 'color' => 'green',  'titulo' => 'Ticket Cerrado',     'desc' => 'El solicitante recibe un email cuando su ticket se cierra'],
+                            'alert_email_ticket_nuevo'     => ['icon' => 'ri-add-circle-line',      'color' => 'amber',  'titulo' => 'Ticket Nuevo',       'desc' => 'El admin destino recibe un email cuando se crea un ticket nuevo'],
+                        ];
+                        $color_map = [
+                            'blue'   => ['bg' => 'bg-blue-50',   'icon' => 'text-blue-600',   'check' => 'accent-blue-600'],
+                            'violet' => ['bg' => 'bg-violet-50', 'icon' => 'text-violet-600', 'check' => 'accent-violet-600'],
+                            'green'  => ['bg' => 'bg-green-50',  'icon' => 'text-green-600',  'check' => 'accent-green-600'],
+                            'amber'  => ['bg' => 'bg-amber-50',  'icon' => 'text-amber-600',  'check' => 'accent-amber-600'],
+                        ];
+                        foreach ($eventos as $key => $ev):
+                            $c = $color_map[$ev['color']];
+                            $checked = !empty($alert_cfg[$key]) && $alert_cfg[$key] === '1' ? 'checked' : '';
+                        ?>
+                        <label class="flex items-start gap-3 p-4 <?= $c['bg'] ?> rounded-xl border border-slate-100 cursor-pointer hover:shadow-sm transition-shadow">
+                            <div class="mt-0.5 p-2 bg-white rounded-lg shadow-sm">
+                                <i class="<?= $ev['icon'] ?> text-xl <?= $c['icon'] ?>"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-slate-800 text-sm"><?= $ev['titulo'] ?></p>
+                                <p class="text-xs text-slate-500 mt-0.5"><?= $ev['desc'] ?></p>
+                            </div>
+                            <input type="checkbox" name="<?= $key ?>" value="1" <?= $checked ?>
+                                   class="mt-1 w-5 h-5 <?= $c['check'] ?> rounded shrink-0">
+                        </label>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Emails adicionales -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                <i class="ri-admin-line text-slate-500"></i> Email del Administrador (receptor de tickets nuevos)
+                            </label>
+                            <input type="email" name="alert_email_admin_destino"
+                                   value="<?= htmlspecialchars($alert_cfg['alert_email_admin_destino'] ?? '') ?>"
+                                   placeholder="admin@empresa.com"
+                                   class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm">
+                            <p class="text-xs text-slate-400 mt-1">Usado cuando "Ticket Nuevo" está activo</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">
+                                <i class="ri-mail-send-line text-slate-500"></i> Dirección "De:" para alertas <span class="font-normal text-slate-400">(opcional)</span>
+                            </label>
+                            <input type="email" name="alert_email_from"
+                                   value="<?= htmlspecialchars($alert_cfg['alert_email_from'] ?? '') ?>"
+                                   placeholder="Usa el usuario SMTP si está vacío"
+                                   class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm">
+                            <p class="text-xs text-slate-400 mt-1">Si vacío, usa el usuario SMTP configurado arriba</p>
+                        </div>
+                    </div>
+
+                    <!-- Botón guardar + feedback -->
+                    <div class="flex items-center justify-between pt-5">
+                        <div id="msg-alertas" class="text-sm h-5 transition-all duration-300 font-medium"></div>
+                        <button type="button" onclick="guardarAlertasEmail()"
+                                class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2">
+                            <i class="ri-save-line"></i> Guardar Alertas
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <script>
+            function guardarAlertasEmail() {
+                var form = document.getElementById('form-alertas-email');
+                var formData = new FormData(form);
+                var btn = form.querySelector('button[onclick]');
+                var msg = document.getElementById('msg-alertas');
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Guardando...';
+                msg.textContent = '';
+
+                fetch('index.php', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.status === 'success') {
+                        msg.textContent = '✓ Guardado correctamente';
+                        msg.className = 'text-sm h-5 transition-all duration-300 font-medium text-green-600';
+                    } else {
+                        msg.textContent = '✗ Error: ' + (data.msg || 'Desconocido');
+                        msg.className = 'text-sm h-5 transition-all duration-300 font-medium text-red-600';
+                    }
+                    setTimeout(function() { msg.textContent = ''; }, 3500);
+                })
+                .catch(function() {
+                    msg.textContent = '✗ Error de conexión';
+                    msg.className = 'text-sm h-5 transition-all duration-300 font-medium text-red-600';
+                })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ri-save-line"></i> Guardar Alertas';
                 });
             }
             </script>
