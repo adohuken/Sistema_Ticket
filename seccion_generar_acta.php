@@ -121,61 +121,43 @@ try {
             <!-- Logo Dinámico -->
             <?php
             $logo_url = '';
-            $logo_key = '';
+            $logo_key_val = '';
 
-            // 1. Obtener contexto del USUARIO ACTUAL (RRHH) para forzar el logo
-            // Esto permite que si RRHH cambia de empresa, el acta salga con ese logo
-            $empresa_usuario_str = '';
+            // Obtener empresa_id del usuario actual (RRHH) para el logo del acta
             if (isset($_SESSION['usuario_id'])) {
                 try {
-                    $stmt_u = $pdo->prepare("SELECT empresa_asignada FROM usuarios WHERE id = ?");
+                    $stmt_u = $pdo->prepare("
+                        SELECT u.empresa_id, e.logo_key
+                        FROM usuarios u
+                        LEFT JOIN empresas e ON u.empresa_id = e.id
+                        WHERE u.id = ?
+                    ");
                     $stmt_u->execute([$_SESSION['usuario_id']]);
-                    $empresa_usuario_str = $stmt_u->fetchColumn();
+                    $row_u = $stmt_u->fetch(PDO::FETCH_ASSOC);
+                    $logo_key_val = $row_u['logo_key'] ?? '';
                 } catch (Exception $e) {
                 }
             }
 
-            // 2. Determinar Key (Prioridad: Usuario > Empleado)
-            if ($empresa_usuario_str) {
-                switch (strtolower($empresa_usuario_str)) {
-                    case 'mastertec':
-                        $logo_key = 'logo_mastertec';
-                        break;
-                    case 'suministros':
-                        $logo_key = 'logo_master_suministros';
-                        break;
-                    case 'centro':
-                        $logo_key = 'logo_centro';
-                        break;
+            // Fallback: usar empresa del empleado si el usuario no tiene empresa asignada
+            if (!$logo_key_val && !empty($empleado['empresa_id'])) {
+                try {
+                    $stmt_emp_logo = $pdo->prepare("SELECT logo_key FROM empresas WHERE id = ?");
+                    $stmt_emp_logo->execute([$empleado['empresa_id']]);
+                    $logo_key_val = $stmt_emp_logo->fetchColumn() ?? '';
+                } catch (Exception $e) {
                 }
             }
 
-            // Si no hay empresa de usuario (o no coincide), usar la del empleado como fallback
-            if (!$logo_key) {
-                $empresa_id = $empleado['empresa_id'] ?? null;
-                if ($empresa_id) {
-                    switch ($empresa_id) {
-                        case 1:
-                            $logo_key = 'logo_mastertec';
-                            break;
-                        case 3:
-                            $logo_key = 'logo_master_suministros';
-                            break;
-                        case 4:
-                            $logo_key = 'logo_centro';
-                            break;
-                    }
-                }
-            }
-
-            if ($logo_key) {
+            if ($logo_key_val) {
                 try {
                     $stmt_logo = $pdo->prepare("SELECT valor FROM configuracion_sistema WHERE clave = ?");
-                    $stmt_logo->execute([$logo_key]);
+                    $stmt_logo->execute([$logo_key_val]);
                     $logo_url = $stmt_logo->fetchColumn();
                 } catch (Exception $e) {
                 }
             }
+
             ?>
 
             <?php if ($logo_url): ?>

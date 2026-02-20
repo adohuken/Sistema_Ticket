@@ -1,7 +1,17 @@
 <?php
-require 'c:/xampp/htdocs/Sistema_Ticket/conexion.php';
-$stmt = $pdo->query('DESCRIBE inventario');
-foreach ($stmt->fetchAll() as $col) {
-    echo $col['Field'] . "\n";
+require 'conexion.php';
+try {
+    echo "--- Mantenimiento Solicitudes ---\n";
+    $stmt = $pdo->query("DESCRIBE mantenimiento_solicitudes");
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        echo $row['Field'] . " (" . $row['Type'] . ")\n";
+    }
+
+    echo "\n--- Mantenimiento Equipos ---\n";
+    $stmt = $pdo->query("DESCRIBE mantenimiento_equipos");
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        echo $row['Field'] . " (" . $row['Type'] . ")\n";
+    }
+} catch (Exception $e) {
+    echo $e->getMessage();
 }
-?>

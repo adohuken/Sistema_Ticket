@@ -1,0 +1,6 @@
+Action: crear_solicitud_masiva
+Role: SuperAdmin
+Is Mantenimiento: NO
+Is Programar: NO
+Is Crear: YES
+Has Role: YES

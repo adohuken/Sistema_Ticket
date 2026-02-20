@@ -28,12 +28,12 @@ $asignaciones_usuarios = $pdo->query("
 
 // Configuración de Grupos (Centralizada)
 $grupos_config = [
-    'Gestión de Tickets' => ['crear_ticket', 'mis_tickets', 'asignar_tickets', 'mis_tareas', 'seguimiento_tickets'],
+    'Gestión de Tickets' => ['crear_ticket', 'mis_tickets', 'asignar_tickets', 'mis_tareas'],
     'Administración' => ['gestion_usuarios', 'gestion_permisos', 'gestion_sucursales', 'categorias', 'dashboard'],
     'RRHH & Personal' => ['gestion_personal', 'personal_importar', 'rrhh_altas', 'rrhh_historial', 'cargos'],
     'Inventario & Activos' => ['rrhh_inventario', 'rrhh_registro_equipo', 'rrhh_asignacion_equipos'],
     'Gestión IT' => ['registros_365', 'mantenimiento_equipos', 'visualizacion_it'],
-    'Reportes & Estadísticas' => ['reportes', 'estadisticas_globales', 'historial_tecnico'],
+    'Reportes & Estadísticas' => ['reportes', 'estadisticas_globales', 'historial_tecnico', 'seguimiento_tickets'],
     'Sistema & Configuración' => ['configuracion', 'backup_bd', 'restaurar_bd', 'reiniciar_bd']
 ];
 
@@ -71,14 +71,19 @@ $icon_map = [
 
 $label_overrides = ['rrhh_altas' => 'Formulario Alta/Baja (Unificado)'];
 
-// Preparar estructura de módulos
+// Preparar estructura de módulos (Respetando orden de $grupos_config)
 $modulos_por_grupo = [];
+foreach (array_keys($grupos_config) as $gName) {
+    $modulos_por_grupo[$gName] = [];
+}
 $modulos_sin_grupo = [];
+
 foreach ($modulos as $m) {
     if ($m['nombre'] === 'rrhh_bajas')
         continue;
     if (isset($label_overrides[$m['nombre']]))
         $m['etiqueta'] = $label_overrides[$m['nombre']];
+
     $asignado = false;
     foreach ($grupos_config as $nombre_grupo => $mods) {
         if (in_array($m['nombre'], $mods)) {
@@ -90,7 +95,15 @@ foreach ($modulos as $m) {
     if (!$asignado)
         $modulos_sin_grupo[] = $m;
 }
-$all_groups = $modulos_por_grupo;
+
+// Filtrar grupos vacíos pero MANTENIENDO el orden
+$all_groups = [];
+foreach ($modulos_por_grupo as $gName => $gMods) {
+    if (!empty($gMods)) {
+        $all_groups[$gName] = $gMods;
+    }
+}
+
 if (!empty($modulos_sin_grupo))
     $all_groups['Otros'] = $modulos_sin_grupo;
 ?>

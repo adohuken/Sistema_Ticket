@@ -1,0 +1,41 @@
+=== CONFIGURACION_SISTEMA ===
+  acta_ingreso_descripcion => Documento informativo sobre el proceso de ingreso del colaborador
+  acta_ingreso_nota_pie => Copia Informativa - No Válida como Contrato
+  acta_ingreso_seccion_accesos => Accesos y Licencias
+  acta_ingreso_seccion_correo => Configuración de Correo
+  acta_ingreso_seccion_datos => Datos del Colaborador
+  acta_ingreso_seccion_equipos => Asignación de Equipos
+  acta_ingreso_titulo => Acta Informativa de Ingreso
+  acta_label_cargo => Cargo/Zona
+  acta_label_cedula => Cédula
+  acta_label_colaborador => Colaborador
+  acta_label_correo => Correo Electrónico
+  acta_label_equipos => Equipos Asignados
+  acta_label_fecha => Fecha
+  acta_label_observaciones => Observaciones
+  acta_label_telefono => Teléfono
+  acta_salida_descripcion => Documento informativo sobre el proceso de salida del colaborador
+  acta_salida_nota_pie => Copia Informativa - No Válida como Finiquito
+  acta_salida_seccion_correo => Gestión de Correo
+  acta_salida_seccion_datos => Datos del Colaborador
+  acta_salida_seccion_equipos => Devolución de Equipos
+  acta_salida_seccion_respaldo => Respaldo de Información
+  acta_salida_titulo => Acta Informativa de Baja
+  acta_subtitulo_empresa => Departamento de RRHH
+  acta_titulo_empresa => Master Technologies
+  logo_centro => uploads/logos/logo_centro_1765810472.png
+  logo_mastertec => uploads/logos/logo_mastertec_1765765877.jpg
+  logo_master_suministros => uploads/logos/logo_master_suministros_1765771910.jpg
+
+=== EMPRESAS ===
+  [1] Mastertec (codigo: Master-ni)
+  [3] Suministros Integrales (codigo: SUMI-MAG)
+  [4] Centro Printuras (codigo: CENT-MAG)
+
+=== USUARIOS empresa_asignada ===
+  [1] SuperAdmin | empresa_asignada='' | empresa_id=
+  [3] JuanTest | empresa_asignada='' | empresa_id=
+  [5] RRHH | empresa_asignada='centro' | empresa_id=
+  [7] PedroTest | empresa_asignada='' | empresa_id=1
+  [8] David Abarca | empresa_asignada='' | empresa_id=
+  [9] Test Tecnico | empresa_asignada='' | empresa_id=

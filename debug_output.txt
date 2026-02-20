@@ -1,0 +1,17 @@
+--- ROLES ---
+ID: 1 - SuperAdmin
+ID: 2 - Admin
+ID: 3 - Tecnico
+ID: 4 - Gerencia
+ID: 5 - RRHH
+ID: 6 - Usuario
+
+--- USUARIOS 'Tecnico%' ---
+
+--- PERMISOS ROL 'Tecnico' (ID 3) ---
+Role Perms:
+- mis_tareas (ID: 19)
+- rrhh_inventario (ID: 33)
+- rrhh_registro_equipo (ID: 34)
+- registros_365 (ID: 40)
+- mantenimiento_equipos (ID: 41)

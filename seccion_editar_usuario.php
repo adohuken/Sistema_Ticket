@@ -41,7 +41,8 @@ if (isset($_GET['id'])) {
 
 if (!$usuario_editar) {
     echo "<div class='p-6 text-red-500'>Usuario no encontrado. ID buscado: " . htmlspecialchars($_GET['id'] ?? 'Nulo') . "</div>";
-    if (isset($e)) echo "<div class='p-6 text-red-500'>Error: " . $e->getMessage() . "</div>";
+    if (isset($e))
+        echo "<div class='p-6 text-red-500'>Error: " . $e->getMessage() . "</div>";
     return;
 }
 ?>
@@ -106,7 +107,7 @@ if (!$usuario_editar) {
                         </div>
                     </div>
 
-                    <!-- Empresa Asignada (solo para RRHH) -->
+                    <!-- Empresa Asignada (solo para RRHH) — dinámico desde BD -->
                     <div id="contenedor_empresa_asignada" style="display:none;" class="pt-4 border-t border-slate-100">
                         <label class="block text-sm font-bold text-slate-700 mb-2">
                             <i class="ri-building-4-line text-teal-600"></i> Empresa Asignada
@@ -115,15 +116,14 @@ if (!$usuario_editar) {
                             RRHH:</p>
                         <div class="relative">
                             <i class="ri-building-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                            <select name="empresa_asignada"
+                            <select name="empresa_id"
                                 class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all bg-slate-50 focus:bg-white appearance-none cursor-pointer">
                                 <option value="">-- Seleccionar Empresa --</option>
-                                <option value="mastertec" <?php echo (isset($usuario_editar['empresa_asignada']) && $usuario_editar['empresa_asignada'] === 'mastertec') ? 'selected' : ''; ?>>MasterTec
-                                </option>
-                                <option value="suministros" <?php echo (isset($usuario_editar['empresa_asignada']) && $usuario_editar['empresa_asignada'] === 'suministros') ? 'selected' : ''; ?>>
-                                    Suministros</option>
-                                <option value="centro" <?php echo (isset($usuario_editar['empresa_asignada']) && $usuario_editar['empresa_asignada'] === 'centro') ? 'selected' : ''; ?>>Centro
-                                </option>
+                                <?php foreach ($empresas_form as $e): ?>
+                                    <option value="<?= $e['id'] ?>" <?= ($usuario_editar['empresa_id'] == $e['id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($e['nombre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                                 <i class="ri-arrow-down-s-line"></i>
@@ -134,6 +134,8 @@ if (!$usuario_editar) {
                             la empresa seleccionada
                         </p>
                     </div>
+
+
 
                     <!-- Permisos de Visualización RRHH -->
                     <div id="contenedor_permisos_rrhh_edit" style="display:none;"

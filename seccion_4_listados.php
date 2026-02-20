@@ -776,14 +776,33 @@
         if (isset($GLOBALS['formularios']) && !empty($GLOBALS['formularios'])) {
             foreach ($GLOBALS['formularios'] as $f) {
                 // Previsualización de datos
-                $tipo_class = $f['tipo'] === 'Ingreso' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200';
-                $icono_tipo = $f['tipo'] === 'Ingreso' ? 'ri-arrow-right-up-line' : 'ri-arrow-left-down-line';
+                // Previsualización de datos y Normalización de Tipo
+                $tipo_display = $f['tipo'];
 
-                echo '<tr class="hover:bg-slate-50/80 transition-colors group fila-rrhh cursor-pointer" onclick=\'verDetallesRRHH(' . json_encode($f) . ')\' data-tipo="' . $f['tipo'] . '">';
+                // Detección robusta de Licencia (Evitar falsos positivos con Salida/Ingreso)
+                if ($f['tipo'] === 'Licencia') {
+                    $tipo_display = 'Licencia';
+                    $tipo_class = 'bg-blue-100 text-blue-700 border-blue-200';
+                    $icono_tipo = 'ri-shield-keyhole-line';
+                } elseif ($f['tipo'] !== 'Ingreso' && $f['tipo'] !== 'Salida' && !empty($f['detalle_licencias'])) {
+                    // Solo si NO es Ingreso ni Salida, y tiene detalles de licencia
+                    $tipo_display = 'Licencia';
+                    $tipo_class = 'bg-blue-100 text-blue-700 border-blue-200';
+                    $icono_tipo = 'ri-shield-keyhole-line';
+                } elseif ($f['tipo'] === 'Ingreso') {
+                    $tipo_class = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                    $icono_tipo = 'ri-arrow-right-up-line';
+                } else {
+                    // Default / Salida
+                    $tipo_class = 'bg-rose-100 text-rose-700 border-rose-200';
+                    $icono_tipo = 'ri-arrow-left-down-line';
+                }
+
+                echo '<tr class="hover:bg-slate-50/80 transition-colors group fila-rrhh cursor-pointer" onclick=\'verDetallesRRHH(' . json_encode(array_merge($f, ['tipo' => $tipo_display])) . ')\' data-tipo="' . $tipo_display . '">';
                 echo '<td class="px-6 py-4 text-sm font-medium text-slate-600 text-center">#' . str_pad($f['id'], 4, '0', STR_PAD_LEFT) . '</td>';
 
                 echo '<td class="px-6 py-4 text-center">';
-                echo '<span class="px-3 py-1 rounded-full text-xs font-bold border flex items-center justify-center gap-1 w-fit mx-auto ' . $tipo_class . '"><i class="' . $icono_tipo . '"></i> ' . $f['tipo'] . '</span>';
+                echo '<span class="px-3 py-1 rounded-full text-xs font-bold border flex items-center justify-center gap-1 w-fit mx-auto ' . $tipo_class . '"><i class="' . $icono_tipo . '"></i> ' . $tipo_display . '</span>';
                 echo '</td>';
 
                 echo '<td class="px-6 py-4 text-left">';
@@ -793,7 +812,7 @@
 
                 echo '<td class="px-6 py-4 text-sm text-slate-600 text-center">' . htmlspecialchars($f['cargo_zona']) . '</td>';
 
-                echo '<td class="px-6 py-4 text-sm text-slate-600 text-center"><span class="flex items-center justify-center gap-2"><i class="ri-calendar-line text-slate-400"></i> ' . date('d/m/Y', strtotime($f['fecha_efectiva'])) . '</span></td>';
+                echo '<td class="px-6 py-4 text-sm text-slate-600 text-center"><span class="flex items-center justify-center gap-2"><i class="ri-calendar-line text-slate-400"></i> ' . date('d/m/Y', strtotime($f['fecha_efectiva'] ?? $f['fecha_solicitud'])) . '</span></td>';
 
                 // Estado Dinámico desde Ticket
                 $status_ticket = 'Procesado';
@@ -801,7 +820,19 @@
 
                 if (isset($GLOBALS['pdo'])) {
                     // Reconstruir título del ticket para búsqueda
-                    $titulo_t = ($f['tipo'] == 'Ingreso') ? "Nuevo Ingreso: " . $f['nombre_colaborador'] : "Baja de Personal: " . $f['nombre_colaborador'];
+                    if ($f['tipo'] == 'Ingreso') {
+                        $titulo_t = "Nuevo Ingreso: " . $f['nombre_colaborador'];
+                    } elseif ($f['tipo'] == 'Licencia') {
+                        // Formato debe coincidir con index.php: "Solicitud de Licencia: $tipo_licencia ($beneficiario)"
+                        // Nota: formularios_rrhh no guarda titulo exacto, tratamos de aproximar o buscar por like si fuera necesario, 
+                        // pero por rendimiento intentamos reconstruir.
+                        // En index.php: $titulo_ticket = "Solicitud de Licencia: $tipo_licencia ($beneficiario)";
+                        // $tipo_licencia en form se guarda en 'detalle_licencias'
+                        $titulo_t = "Solicitud de Licencia: " . ($f['detalle_licencias'] ?? '') . " (" . $f['nombre_colaborador'] . ")";
+                    } else {
+                        $titulo_t = "Baja de Personal: " . $f['nombre_colaborador'];
+                    }
+
                     $stmt_st = $GLOBALS['pdo']->prepare("SELECT estado FROM tickets WHERE titulo = ? ORDER BY id DESC LIMIT 1");
                     $stmt_st->execute([$titulo_t]);
                     $est = $stmt_st->fetchColumn();
@@ -828,10 +859,12 @@
                 echo '<div class="flex items-center justify-center gap-2">';
 
                 // Botones de Impresión (Agregados por solicitud)
-                if ($f['tipo'] === 'Ingreso') {
-                    echo '<a href="imprimir_acta_ingreso.php?id=' . $f['id'] . '" target="_blank" class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm flex items-center justify-center cursor-pointer" title="Ver Acta Informativa (Sin Firma)"><i class="ri-file-info-line"></i></a>';
+                if ($tipo_display === 'Ingreso') {
+                    echo '<a href="imprimir_acta_ingreso.php?id=' . $f['id'] . '" target="_blank" class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm flex items-center justify-center cursor-pointer" title="Ver Acta Informativa"><i class="ri-file-info-line"></i></a>';
+                } elseif ($tipo_display === 'Licencia') {
+                    echo '<a href="imprimir_acta_licencia.php?id=' . $f['id'] . '" target="_blank" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center cursor-pointer" title="Ver Acta de Licencia"><i class="ri-printer-line"></i></a>';
                 } else {
-                    echo '<a href="imprimir_acta_salida.php?id=' . $f['id'] . '" target="_blank" class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm flex items-center justify-center cursor-pointer" title="Ver Acta Informativa (Sin Firma)"><i class="ri-file-info-line"></i></a>';
+                    echo '<a href="imprimir_acta_salida.php?id=' . $f['id'] . '" target="_blank" class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm flex items-center justify-center cursor-pointer" title="Ver Acta Informativa"><i class="ri-file-info-line"></i></a>';
                 }
 
                 echo '<button class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center justify-center cursor-pointer" title="Ver Detalles"><i class="ri-eye-line"></i></button>';
@@ -890,7 +923,7 @@
     </div>
 </div>
 
-<div id="modalRRHH" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 md:items-start md:pt-32">
+<div id="modalRRHH" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 md:items-start md:pt-20">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-all scale-95 opacity-0 duration-300" id="modalRRHHContent">
                 <!-- Header -->
                 <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
@@ -951,9 +984,22 @@
                 const titulo = document.getElementById("modalRRHHTitulo");
 
                 // Set Title and Color
-                const isIngreso = data.tipo === "Ingreso";
-                const iconClass = isIngreso ? "ri-arrow-right-up-line" : "ri-arrow-left-down-line";
-                const colorClass = isIngreso ? "text-emerald-600" : "text-rose-600";
+                let iconClass = "ri-arrow-left-down-line";
+                let colorClass = "text-rose-600";
+                let bgGradient = "from-rose-50 to-pink-50 border-rose-100";
+                let labelColor = "text-rose-600";
+                
+                if (data.tipo === "Ingreso") {
+                    iconClass = "ri-arrow-right-up-line";
+                    colorClass = "text-emerald-600";
+                    bgGradient = "from-emerald-50 to-teal-50 border-emerald-100";
+                    labelColor = "text-emerald-600";
+                } else if (data.tipo === "Licencia") {
+                    iconClass = "ri-shield-keyhole-line";
+                    colorClass = "text-blue-600";
+                    bgGradient = "from-blue-50 to-indigo-50 border-blue-100";
+                    labelColor = "text-blue-600";
+                }
                 
                 titulo.innerHTML = `<i class="${iconClass} ${colorClass}"></i> <span>Detalle de ${data.tipo}</span> <span class="text-sm font-normal text-slate-400 ml-2">#${String(data.id).padStart(4,"0")}</span>`;
 
@@ -976,10 +1022,10 @@
                 
                 // Main Info Card
                 html += `
-                    <div class="bg-gradient-to-br ${isIngreso ? "from-emerald-50 to-teal-50 border-emerald-100" : "from-rose-50 to-pink-50 border-rose-100"} p-5 rounded-2xl border">
+                    <div class="bg-gradient-to-br ${bgGradient} p-5 rounded-2xl border">
                         <div class="flex flex-col md:flex-row justify-between gap-4">
                             <div>
-                                <label class="text-[10px] font-bold ${isIngreso ? "text-emerald-600" : "text-rose-600"} uppercase tracking-wider block mb-1">Colaborador</label>
+                                <label class="text-[10px] font-bold ${labelColor} uppercase tracking-wider block mb-1">Colaborador</label>
                                 <p class="font-bold text-slate-800 text-xl">${data.nombre_colaborador}</p>
                                 <div class="flex items-center gap-2 mt-1 opacity-75">
                                     <i class="ri-id-card-line text-xs"></i>
@@ -987,11 +1033,11 @@
                                 </div>
                             </div>
                             <div class="md:text-right">
-                                <label class="text-[10px] font-bold ${isIngreso ? "text-emerald-600" : "text-rose-600"} uppercase tracking-wider block mb-1">Cargo / Fecha</label>
+                                <label class="text-[10px] font-bold ${labelColor} uppercase tracking-wider block mb-1">Cargo / Fecha</label>
                                 <p class="font-bold text-slate-800">${data.cargo_zona}</p>
                                 <div class="flex items-center gap-1 mt-1 font-mono text-xs text-slate-500 md:justify-end">
                                     <i class="ri-calendar-event-line"></i>
-                                    <span>${data.fecha_efectiva ? new Date(data.fecha_efectiva).toLocaleDateString() : "N/A"}</span>
+                                    <span>${data.fecha_efectiva ? new Date(data.fecha_efectiva).toLocaleDateString() : (data.fecha_solicitud ? new Date(data.fecha_solicitud).toLocaleDateString() : "N/A")}</span>
                                 </div>
                             </div>
                         </div>

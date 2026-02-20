@@ -1,0 +1,8 @@
+Users with Role ID 3:
+ID: 3 - JuanTest
+  Extra Perms: asignar_tickets, configuracion, seguimiento_tickets, visualizacion_it
+ID: 9 - Test Tecnico
+  Extra Perms: 
+Inserted historial_tecnico (39)
+Inserted reportes (20)
+Inserted estadisticas_globales (37)

@@ -1,0 +1,16 @@
+Added logo_key column to empresas
+Updated logo_key values
+Migrated user 5: empresa_asignada='centro' -> empresa_id=4
+
+=== EMPRESAS with logo_key ===
+  [1] Mastertec | logo_key=logo_mastertec
+  [3] Suministros Integrales | logo_key=logo_master_suministros
+  [4] Centro Printuras | logo_key=logo_centro
+
+=== USUARIOS empresa_id ===
+  [1] SuperAdmin | empresa_asignada='' | empresa_id= ()
+  [3] JuanTest | empresa_asignada='' | empresa_id= ()
+  [5] RRHH | empresa_asignada='centro' | empresa_id=4 (Centro Printuras)
+  [7] PedroTest | empresa_asignada='' | empresa_id=1 (Mastertec)
+  [8] David Abarca | empresa_asignada='' | empresa_id= ()
+  [9] Test Tecnico | empresa_asignada='' | empresa_id= ()

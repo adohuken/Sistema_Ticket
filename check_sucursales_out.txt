@@ -1,0 +1,127 @@
+=== ALL TABLES ===
+  asignaciones
+  cargos
+  categorias
+  configuracion_sistema
+  empresas
+  formularios_rrhh
+  herramientas_tecnico
+  historial_actividad
+  historial_cambios
+  inventario
+  mantenimiento_equipos
+  mantenimiento_solicitudes
+  modulos
+  notificaciones
+  permisos_roles
+  permisos_usuarios
+  personal
+  personal_historial
+  registros_365
+  roles
+  sucursales
+  ticket_adjuntos
+  ticket_comentarios
+  tickets
+  usuarios
+  usuarios_accesos
+  vista_personal_completo
+
+=== USUARIOS COLUMNS ===
+  id | int(11) | Key:PRI
+  nombre_completo | varchar(100) | Key:
+  email | varchar(100) | Key:UNI
+  password | varchar(255) | Key:
+  rol_id | int(11) | Key:MUL
+  empresa_id | int(11) | Key:MUL
+  sucursal_id | int(11) | Key:MUL
+  fecha_creacion | timestamp | Key:
+  notifs_email | tinyint(1) | Key:
+  notifs_sonido | tinyint(1) | Key:
+  empresa_asignada | enum('mastertec','suministros','centro') | Key:
+
+=== SUCURSALES COLUMNS ===
+  id | int(11)
+  empresa_id | int(11)
+  nombre | varchar(100)
+  codigo | varchar(20)
+  ciudad | varchar(100)
+  pais | varchar(50)
+  direccion | text
+  telefono | varchar(20)
+  email | varchar(100)
+  activa | tinyint(1)
+  fecha_creacion | datetime
+  fecha_modificacion | datetime
+
+=== SUCURSALES ROWS ===
+  {"id":1,"empresa_id":1,"nombre":"Master Leon","codigo":"Mt-ln","ciudad":"Leon","pais":"Nicaragua","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 13:20:53","fecha_modificacion":"2025-12-14 13:20:53"}
+  {"id":2,"empresa_id":3,"nombre":"Sebaco","codigo":"Seb-SUMI","ciudad":"Sebaco","pais":"Nicaragua","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 13:28:47","fecha_modificacion":"2025-12-14 13:28:47"}
+  {"id":3,"empresa_id":3,"nombre":"Leon","codigo":"Leo-SUMI","ciudad":"Leon","pais":"Nicaragua","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 13:29:24","fecha_modificacion":"2025-12-14 13:29:24"}
+  {"id":4,"empresa_id":4,"nombre":"El Salvador","codigo":"SALv-Cent","ciudad":"San Salvador","pais":"El Salvador","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 13:31:05","fecha_modificacion":"2025-12-14 13:31:05"}
+  {"id":5,"empresa_id":4,"nombre":"Republica Dominicana","codigo":"RD-Cent","ciudad":"Santo Domingo","pais":"Republica Dominicana","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 13:32:09","fecha_modificacion":"2025-12-14 13:32:09"}
+  {"id":6,"empresa_id":3,"nombre":"Suministros Honduras","codigo":"SUMI-HN","ciudad":"Tegusigalpa","pais":"Honduras","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 13:32:42","fecha_modificacion":"2025-12-14 13:32:42"}
+  {"id":7,"empresa_id":1,"nombre":"Master Honduras","codigo":"MST-HN","ciudad":"Tegusigalpa","pais":"Honduras","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 13:33:14","fecha_modificacion":"2025-12-14 13:33:14"}
+  {"id":8,"empresa_id":1,"nombre":"Master Managua","codigo":"MAs-MAG","ciudad":"Managua","pais":"Nicaragua","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-14 15:20:55","fecha_modificacion":"2025-12-14 15:20:55"}
+  {"id":9,"empresa_id":4,"nombre":"Centro Managua","codigo":"cp-MGA","ciudad":"Managua","pais":"Nicaragua","direccion":null,"telefono":null,"email":null,"activa":1,"fecha_creacion":"2025-12-15 09:13:40","fecha_modificacion":"2025-12-15 09:13:40"}
+
+=== EMPRESAS COLUMNS ===
+  id | int(11)
+  nombre | varchar(100)
+  codigo | varchar(20)
+  pais | varchar(50)
+  activa | tinyint(1)
+  fecha_creacion | datetime
+  fecha_modificacion | datetime
+
+=== EMPRESAS ROWS ===
+  {"id":1,"nombre":"Mastertec","codigo":"Master-ni","pais":"Nicaragua","activa":1,"fecha_creacion":"2025-12-14 12:52:52","fecha_modificacion":"2026-02-03 15:13:46"}
+  {"id":3,"nombre":"Suministros Integrales","codigo":"SUMI-MAG","pais":"Nicaragua","activa":1,"fecha_creacion":"2025-12-14 13:28:09","fecha_modificacion":"2025-12-14 13:28:09"}
+  {"id":4,"nombre":"Centro Printuras","codigo":"CENT-MAG","pais":"Nicaragua","activa":1,"fecha_creacion":"2025-12-14 13:30:05","fecha_modificacion":"2025-12-15 09:13:15"}
+
+=== TICKETS COLUMNS ===
+  id | int(11)
+  titulo | varchar(150)
+  descripcion | text
+  resolucion | text
+  prioridad | enum('Baja','Media','Alta','Critica')
+  estado | enum('Pendiente','Asignado','Completo')
+  creador_id | int(11)
+  categoria_id | int(11)
+  fecha_creacion | timestamp
+  fecha_actualizacion | timestamp
+
+=== FOREIGN KEYS INVOLVING usuarios/sucursales/empresas ===
+  asignaciones.asignado_por -> usuarios.id
+  asignaciones.ticket_id -> tickets.id
+  asignaciones.tecnico_id -> usuarios.id
+  formularios_rrhh.creado_por -> usuarios.id
+  herramientas_tecnico.usuario_id -> usuarios.id
+  historial_actividad.usuario_id -> usuarios.id
+  historial_cambios.usuario_id -> usuarios.id
+  mantenimiento_equipos.registrado_por -> usuarios.id
+  mantenimiento_equipos.equipo_id -> inventario.id
+  mantenimiento_equipos.responsable_id -> usuarios.id
+  permisos_roles.modulo_id -> modulos.id
+  permisos_roles.rol_id -> roles.id
+  permisos_usuarios.modulo_id -> modulos.id
+  permisos_usuarios.usuario_id -> usuarios.id
+  personal.empresa_id -> empresas.id
+  personal.modificado_por -> usuarios.id
+  personal.creado_por -> usuarios.id
+  personal.usuario_sistema_id -> usuarios.id
+  personal.sucursal_id -> sucursales.id
+  personal_historial.registrado_por -> usuarios.id
+  personal_historial.personal_id -> personal.id
+  registros_365.usuario_id -> personal.id
+  sucursales.empresa_id -> empresas.id
+  tickets.creador_id -> usuarios.id
+  tickets.categoria_id -> categorias.id
+  ticket_adjuntos.usuario_id -> usuarios.id
+  ticket_adjuntos.ticket_id -> tickets.id
+  ticket_comentarios.ticket_id -> tickets.id
+  ticket_comentarios.usuario_id -> usuarios.id
+  usuarios.empresa_id -> empresas.id
+  usuarios.sucursal_id -> sucursales.id
+  usuarios.rol_id -> roles.id
+  usuarios_accesos.sucursal_id -> sucursales.id

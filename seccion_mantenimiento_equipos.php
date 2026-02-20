@@ -1,6 +1,10 @@
 <?php
 // AJAX HANDLERS
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'obtener_equipos_visita') {
+    // Limpiar buffer y header JSON
+    ob_end_clean();
+    header('Content-Type: application/json');
+
     // Verificar permisos
     if (!in_array($rol_usuario, ['Admin', 'SuperAdmin', 'Tecnico'])) {
         echo json_encode(['error' => 'Sin permiso']);
@@ -30,9 +34,13 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'obtener_equipos_vis
     // Solo equipos asignados? O todos? El usuario pidió "Pc asignadas"
     // Pero mejor mostramos todo lo que podamos vincular a la sede.
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    } catch (PDOException $e) {
+        echo json_encode(['error' => 'Error SQL: ' . $e->getMessage()]);
+    }
     exit;
 }
 
@@ -86,8 +94,9 @@ $equipos = $stmt_inv->fetchAll(PDO::FETCH_ASSOC);
 
 
 // --- LÓGICA DE TICKETS DE MANTENIMIENTO ---
-$filtro_estado = $_GET['estado'] ?? 'En Proceso';
+$filtro_estado = $_GET['estado'] ?? 'Todos';
 $filtro_tipo = $_GET['tipo'] ?? '';
+$busqueda_ticket = $_GET['busqueda_ticket'] ?? '';
 
 $sql_mant = "
     SELECT m.*, 
@@ -100,6 +109,9 @@ $sql_mant = "
 ";
 $params_mant = [];
 
+// Excluir 'Preparacion' de la pestaña principal de Tickets
+$sql_mant .= " AND m.tipo_mantenimiento != 'Preparacion'";
+
 if ($filtro_estado && $filtro_estado !== 'Todos') {
     $sql_mant .= " AND m.estado = ?";
     $params_mant[] = $filtro_estado;
@@ -107,6 +119,13 @@ if ($filtro_estado && $filtro_estado !== 'Todos') {
 if ($filtro_tipo) {
     $sql_mant .= " AND m.tipo_mantenimiento = ?";
     $params_mant[] = $filtro_tipo;
+}
+if ($busqueda_ticket) {
+    $sql_mant .= " AND (i.serial LIKE ? OR i.modelo LIKE ? OR u.nombres LIKE ?)";
+    $term = "%$busqueda_ticket%";
+    $params_mant[] = $term;
+    $params_mant[] = $term;
+    $params_mant[] = $term;
 }
 $sql_mant .= " ORDER BY m.fecha_inicio DESC";
 $stmt_mant = $pdo->prepare($sql_mant);
@@ -116,15 +135,16 @@ $mantenimientos = $stmt_mant->fetchAll(PDO::FETCH_ASSOC);
 // Estadísticas rápidas (Tickets)
 $stmt_stats = $pdo->query("
     SELECT 
-        SUM(CASE WHEN estado = 'En Proceso' THEN 1 ELSE 0 END) as en_proceso,
-        SUM(CASE WHEN estado = 'Programado' THEN 1 ELSE 0 END) as programados,
-        SUM(CASE WHEN estado = 'Completado' AND MONTH(fecha_fin) = MONTH(CURRENT_DATE()) THEN 1 ELSE 0 END) as completados_mes
+        SUM(CASE WHEN estado = 'En Proceso' AND tipo_mantenimiento != 'Preparacion' THEN 1 ELSE 0 END) as en_proceso,
+        SUM(CASE WHEN estado = 'Programado' AND tipo_mantenimiento != 'Preparacion' THEN 1 ELSE 0 END) as programados,
+        SUM(CASE WHEN estado = 'Completado' AND MONTH(fecha_fin) = MONTH(CURRENT_DATE()) AND tipo_mantenimiento != 'Preparacion' THEN 1 ELSE 0 END) as completados_mes,
+        SUM(CASE WHEN tipo_mantenimiento = 'Preparacion' THEN 1 ELSE 0 END) as total_ingresos
     FROM mantenimiento_equipos
 ");
-$stats = $stmt_stats->fetch(PDO::FETCH_ASSOC);
+$stats = $stmt_stats->fetch(PDO::FETCH_ASSOC) ?: ['en_proceso' => 0, 'programados' => 0, 'completados_mes' => 0, 'total_ingresos' => 0];
 
 // Pestaña Activa
-$active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
+$active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte', 'tickets', 'ingresos'
 ?>
 
 <div class="p-6 flex-1 bg-slate-50 min-h-screen">
@@ -151,7 +171,7 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                 <button onclick="abrirModalMantenimiento()"
                     class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-amber-500/30 transition-all flex items-center gap-2">
                     <i class="ri-add-line text-xl"></i>
-                    Registrar Mantenimiento
+                    Registrar Servicio / Ingreso
                 </button>
             </div>
         </div>
@@ -177,6 +197,14 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                     Historial de Reparaciones
                     <span
                         class="bg-slate-100 text-slate-600 py-0.5 px-2.5 rounded-full text-xs ml-2"><?= $stats['en_proceso'] + $stats['programados'] ?></span>
+                </a>
+
+                <a href="index.php?view=mantenimiento_equipos&tab=ingresos"
+                    class="<?= $active_tab === 'ingresos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+                    <i class="ri-login-circle-line text-lg"></i>
+                    Bitácora de Ingresos
+                    <span
+                        class="bg-indigo-100 text-indigo-600 py-0.5 px-2.5 rounded-full text-xs ml-2"><?= $stats['total_ingresos'] ?></span>
                 </a>
             </nav>
         </div>
@@ -240,17 +268,22 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <?php if ($bi['estado'] != 'Completado'): ?>
-                                            <button
-                                                onclick="ejecutarVisita(<?= $bi['id'] ?>, '<?= $bi['empresa_id'] ?>', '<?= $bi['sucursal_id'] ?>', '<?= htmlspecialchars($bi['titulo']) ?>')"
-                                                class="text-indigo-600 hover:text-indigo-900 font-bold border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50 transition-colors">
-                                                <i class="ri-play-circle-line align-middle"></i> Ejecutar
-                                            </button>
-                                        <?php else: ?>
-                                            <span
-                                                class="text-green-600 font-bold text-xs border border-green-200 bg-green-50 px-2 py-1 rounded"><i
-                                                    class="ri-check-double-line"></i> Completado</span>
-                                        <?php endif; ?>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <?php if ($bi['estado'] != 'Completado'): ?>
+                                                <button
+                                                    onclick="ejecutarVisita(<?= $bi['id'] ?>, '<?= $bi['empresa_id'] ?>', '<?= $bi['sucursal_id'] ?>', '<?= htmlspecialchars($bi['titulo']) ?>')"
+                                                    class="text-indigo-600 hover:text-indigo-900 font-bold border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50 transition-colors"
+                                                    title="Ejecutar Visita">
+                                                    <i class="ri-play-circle-line align-middle"></i> Ejecutar
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <a href="imprimir_reporte_visita.php?id=<?= $bi['id'] ?>" target="_blank"
+                                                class="text-slate-500 hover:text-indigo-600 border border-slate-200 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+                                                title="Ver Reporte">
+                                                <i class="ri-printer-line text-lg"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -496,14 +529,34 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                             </option>
                             <option value="Programado" <?= $filtro_estado == 'Programado' ? 'selected' : '' ?>>Programado
                             </option>
-                            <option value="Completado" <?= $filtro_estado == 'Completado' ? 'selected' : '' ?>>Completado
-                            </option>
-                            <option value="Cancelado" <?= $filtro_estado == 'Cancelado' ? 'selected' : '' ?>>Cancelado
                             </option>
                         </select>
                     </div>
+
+                    <div class="w-48">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo</label>
+                        <select name="tipo"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                            <option value="">Todos</option>
+                            <option value="Preventivo" <?= $filtro_tipo == 'Preventivo' ? 'selected' : '' ?>>Preventivo
+                            </option>
+                            <option value="Correctivo" <?= $filtro_tipo == 'Correctivo' ? 'selected' : '' ?>>Correctivo
+                            </option>
+                            <option value="Upgrade" <?= $filtro_tipo == 'Upgrade' ? 'selected' : '' ?>>Upgrade</option>
+                            </select>
+                    </div>
+
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Búsqueda</label>
+                        <input type="text" name="busqueda_ticket" value="<?= htmlspecialchars($busqueda_ticket) ?>"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
+                            placeholder="Serial, Modelo, Técnico...">
+                    </div>
+
                     <button type="submit"
-                        class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors">Filtrar</button>
+                        class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors">
+                        <i class="ri-search-line mr-2"></i>Filtrar
+                    </button>
                 </form>
             </div>
 
@@ -529,37 +582,176 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             <?php if (empty($mantenimientos)): ?>
-                                <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-slate-400">No hay tickets.</td>
-                                </tr>
-                            <?php else: ?>
-                                <?php foreach ($mantenimientos as $m): ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-6 py-4">
-                                            <div class="font-semibold text-slate-800">
-                                                <?= htmlspecialchars($m['equipo_tipo'] . ' ' . $m['marca']) ?>
-                                            </div>
-                                            <code
-                                                class="text-xs bg-slate-100 px-1 rounded"><?= htmlspecialchars($m['serial']) ?></code>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm font-medium text-slate-700">
-                                                <?= htmlspecialchars($m['tipo_mantenimiento']) ?>
-                                            </div>
-                                            <div class="text-xs text-slate-500">
-                                                <?= htmlspecialchars($m['descripcion_problema']) ?>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span
-                                                class="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700"><?= $m['estado'] ?></span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <button onclick='editarMantenimiento(<?= json_encode($m) ?>)'
-                                                class="text-amber-600 hover:text-amber-800 font-medium">Editar</button>
-                                        </td>
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-12 text-center text-slate-400">No hay tickets.</td>
                                     </tr>
-                                <?php endforeach; ?>
+                            <?php else: ?>
+                                    <?php foreach ($mantenimientos as $m): ?>
+                                            <tr class="hover:bg-slate-50 transition-colors">
+                                                <td class="px-6 py-4">
+                                                    <div class="font-semibold text-slate-800">
+                                                        <?= htmlspecialchars($m['equipo_tipo'] . ' ' . $m['marca']) ?>
+                                                    </div>
+                                                    <code
+                                                        class="text-xs bg-slate-100 px-1 rounded"><?= htmlspecialchars($m['serial']) ?></code>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm font-medium text-slate-700">
+                                                        <?= htmlspecialchars($m['tipo_mantenimiento']) ?>
+                                                    </div>
+                                                    <div class="text-xs text-slate-500">
+                                                        <?= htmlspecialchars($m['descripcion_problema']) ?>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span
+                                                        class="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700"><?= $m['estado'] ?></span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <button onclick='editarMantenimiento(<?= json_encode($m) ?>)'
+                                                        class="text-amber-600 hover:text-amber-800 font-medium">Editar</button>
+                                                    <button type="button" onclick='verDetallesMantenimiento(<?= json_encode($m) ?>)'
+                                                        class="ml-2 text-blue-600 hover:text-blue-800 font-medium" title="Ver Detalles">
+                                                        <i class="ri-eye-line text-lg align-bottom"></i>
+                                                    </button>
+                                                </td>
+                                                </td>
+                                            </tr>
+                                    <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: BITÁCORA DE INGRESOS (Preparación/Inicialización) -->
+        <div id="tab-ingresos" class="<?= $active_tab === 'ingresos' ? 'block' : 'hidden' ?>">
+             <?php
+             // Lógica específica para esta pestaña
+             $filtro_estado_ingreso = $_GET['estado_ingreso'] ?? 'Todos';
+             $busqueda_ingreso = $_GET['busqueda_ingreso'] ?? '';
+
+             $sql_ingresos = "
+                SELECT m.*, 
+                       i.tipo as equipo_tipo, i.marca, i.modelo, i.serial,
+                       CONCAT(u.nombres, ' ', u.apellidos) as tecnico_nombre
+                FROM mantenimiento_equipos m
+                JOIN inventario i ON m.equipo_id = i.id
+                LEFT JOIN vista_personal_completo u ON m.registrado_por = u.id
+                WHERE m.tipo_mantenimiento = 'Preparacion'
+            ";
+             $params_ingresos = [];
+
+             if ($filtro_estado_ingreso && $filtro_estado_ingreso !== 'Todos') {
+                 $sql_ingresos .= " AND m.estado = ?";
+                 $params_ingresos[] = $filtro_estado_ingreso;
+             }
+             if ($busqueda_ingreso) {
+                 $sql_ingresos .= " AND (i.serial LIKE ? OR i.modelo LIKE ? OR u.nombres LIKE ?)";
+                 $term = "%$busqueda_ingreso%";
+                 $params_ingresos[] = $term;
+                 $params_ingresos[] = $term;
+                 $params_ingresos[] = $term;
+             }
+             $sql_ingresos .= " ORDER BY m.fecha_inicio DESC";
+             $stmt_ingresos = $pdo->prepare($sql_ingresos);
+             $stmt_ingresos->execute($params_ingresos);
+             $ingresos = $stmt_ingresos->fetchAll(PDO::FETCH_ASSOC);
+             ?>
+
+            <!-- Filtros Ingresos -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
+                 <div class="flex items-center gap-3 mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100 text-indigo-800">
+                    <i class="ri-information-fill text-xl"></i>
+                    <div>
+                        <p class="font-bold text-sm">Bitácora de Ingresos y Preparación</p>
+                        <p class="text-xs opacity-80">Aquí se muestran exclusivamente los equipos que ingresan para configuración inicial, formateo o preparación.</p>
+                    </div>
+                </div>
+
+                <form action="" method="GET" class="flex flex-wrap gap-4 items-end">
+                    <input type="hidden" name="view" value="mantenimiento_equipos">
+                    <input type="hidden" name="tab" value="ingresos">
+
+                    <div class="w-48">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
+                        <select name="estado_ingreso"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                            <option value="Todos" <?= $filtro_estado_ingreso == 'Todos' ? 'selected' : '' ?>>Todos</option>
+                            <option value="En Proceso" <?= $filtro_estado_ingreso == 'En Proceso' ? 'selected' : '' ?>>En Proceso</option>
+                            <option value="Programado" <?= $filtro_estado_ingreso == 'Programado' ? 'selected' : '' ?>>Programado</option>
+                            <option value="Completado" <?= $filtro_estado_ingreso == 'Completado' ? 'selected' : '' ?>>Completado</option>
+                        </select>
+                    </div>
+
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Búsqueda</label>
+                        <input type="text" name="busqueda_ingreso" value="<?= htmlspecialchars($busqueda_ingreso) ?>"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="Serial, Modelo...">
+                    </div>
+
+                    <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
+                        <i class="ri-search-line mr-2"></i>Filtrar
+                    </button>
+                </form>
+            </div>
+
+            <!-- Tabla Ingresos -->
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-indigo-50 border-b border-indigo-100 text-indigo-900">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Equipo / Activo</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Fecha Ingreso</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Estado</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                             <?php if (empty($ingresos)): ?>
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-12 text-center text-slate-400">No hay registros de ingresos.</td>
+                                    </tr>
+                            <?php else: ?>
+                                    <?php foreach ($ingresos as $ing): ?>
+                                            <tr class="hover:bg-slate-50 transition-colors">
+                                                <td class="px-6 py-4">
+                                                    <div class="font-bold text-slate-800">
+                                                        <?= htmlspecialchars($ing['equipo_tipo'] . ' ' . $ing['marca']) ?>
+                                                    </div>
+                                                    <div class="flex items-center gap-2 mt-1">
+                                                        <span class="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono border border-indigo-200"><?= htmlspecialchars($ing['serial']) ?></span>
+                                                        <span class="text-xs text-slate-500"><?= htmlspecialchars($ing['modelo']) ?></span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm font-medium text-slate-700">
+                                                        <?= date('d/m/Y', strtotime($ing['fecha_inicio'])) ?>
+                                                    </div>
+                                                    <div class="text-xs text-slate-400">
+                                                        <?= date('H:i A', strtotime($ing['fecha_inicio'])) ?>
+                                                    </div>
+                                                </td>
+                                                 <td class="px-6 py-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-bold 
+                                                <?= $ing['estado'] == 'En Proceso' ? 'bg-amber-100 text-amber-700' : ($ing['estado'] == 'Completado' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600') ?>">
+                                                        <?= $ing['estado'] ?>
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                     <button onclick='editarMantenimiento(<?= json_encode($ing) ?>)'
+                                                        class="text-indigo-600 hover:text-indigo-800 font-medium">Editar</button>
+                                                    <button type="button" onclick='verDetallesMantenimiento(<?= json_encode($ing) ?>)'
+                                                        class="ml-2 text-slate-500 hover:text-indigo-600 font-medium" title="Ver Detalles">
+                                                        <i class="ri-eye-line text-lg align-bottom"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                    <?php endforeach; ?>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -575,7 +767,7 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <!-- ... (Contenido del modal, simplificado para brevity en este tool call, pero en el archivo real debe ir completo) ... -->
     <!-- Copiaré el modal completo en la escritura real, aquí solo indico estructura -->
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
         <div class="bg-amber-600 px-6 py-4 flex justify-between items-center flex-shrink-0">
             <h3 class="text-xl font-bold text-white flex items-center gap-2" id="modal-titulo">
                 <i class="ri-tools-fill"></i> Registrar Mantenimiento
@@ -584,12 +776,13 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                 <i class="ri-close-line text-2xl"></i>
             </button>
         </div>
-        <div class="overflow-y-auto p-6">
+        <div class="overflow-y-auto p-6 flex-grow">
             <form id="form-mantenimiento" method="POST" action="index.php" class="space-y-4"
                 onsubmit="guardarMantenimiento(event)">
                 <input type="hidden" name="accion" id="form-accion" value="registrar_mantenimiento">
                 <input type="hidden" name="view" value="mantenimiento_equipos"> <!-- Se queda en la misma view -->
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                <input type="hidden" name="id" id="mantenimiento-id">
 
                 <div id="div-seleccion-equipo" class="bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
                     <label class="block text-sm font-bold text-slate-700 mb-2">Equipo <span
@@ -607,26 +800,99 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                     $equipos_list = $stmt_eq->fetchAll(PDO::FETCH_ASSOC);
                     ?>
 
-                    <!-- Buscador Simple -->
-                    <div class="relative mb-2">
-                        <input type="text" id="filtro_equipo_input" onkeyup="filtrarEquipos()"
-                            class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
-                            placeholder="🔍 Buscar por usuario, serie o modelo...">
-                        <div
-                            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                            <i class="ri-search-line"></i>
-                        </div>
+                    <!-- Toggle: Buscar vs Nuevo -->
+                    <div class="flex items-center justify-between mb-3 bg-slate-100 p-1 rounded-lg">
+                        <button type="button" id="btn-modo-buscar" onclick="toggleModoEquipo('buscar')"
+                            class="flex-1 px-3 py-1.5 rounded-md text-sm font-bold transition-all bg-white text-indigo-600 shadow-sm">
+                            <i class="ri-search-line"></i> Buscar Existente
+                        </button>
+                        <button type="button" id="btn-modo-nuevo" onclick="toggleModoEquipo('nuevo')"
+                            class="flex-1 px-3 py-1.5 rounded-md text-sm font-bold text-slate-500 hover:text-indigo-600 transition-all">
+                            <i class="ri-add-circle-line"></i> Registrar Nuevo
+                        </button>
                     </div>
 
-                    <select name="equipo_id" id="equipo_id"
-                        class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg outline-none cursor-pointer">
-                        <option value="">Seleccionar equipo...</option>
-                        <?php foreach ($equipos_list as $eq):
-                            $texto = ($eq['usuario'] ? $eq['usuario'] : 'Sin Asignar') . ' | ' . $eq['tipo'] . ' ' . $eq['marca'] . ' (' . $eq['serial'] . ')';
-                            ?>
-                            <option value="<?= $eq['id'] ?>"><?= htmlspecialchars($texto) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <!-- MODO BUSCAR -->
+                    <div id="modo-buscar-container">
+                        <div class="relative mb-2">
+                            <input type="text" id="filtro_equipo_input" onkeyup="filtrarEquipos()"
+                                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
+                                placeholder="🔍 Buscar por usuario, serie o modelo...">
+                            <div
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i class="ri-search-line"></i>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 mb-2 px-1">
+                            <label
+                                class="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer select-none">
+                                <input type="checkbox" id="check_sin_asignar" onchange="filtrarEquipos()"
+                                    class="rounded text-amber-600 focus:ring-amber-500">
+                                Mostrar solo Sin Asignar
+                            </label>
+                        </div>
+
+                        <select name="equipo_id" id="equipo_id"
+                            class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg outline-none cursor-pointer">
+                            <option value="">Seleccionar equipo...</option>
+                            <?php foreach ($equipos_list as $eq):
+                                $es_asignado = !empty($eq['usuario']);
+                                $texto = ($es_asignado ? $eq['usuario'] : 'Sin Asignar') . ' | ' . $eq['tipo'] . ' ' . $eq['marca'] . ' (' . $eq['serial'] . ')';
+                                ?>
+                                    <option value="<?= $eq['id'] ?>" data-asignado="<?= $es_asignado ? '1' : '0' ?>">
+                                        <?= htmlspecialchars($texto) ?>
+                                    </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- MODO NUEVO -->
+                    <div id="modo-nuevo-container" class="hidden space-y-3 animate-fade-in-down">
+                        <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-lg mb-2">
+                            <p class="text-xs text-indigo-700 flex items-center gap-2">
+                                <i class="ri-information-fill"></i>
+                                Se creará un nuevo activo en inventario automáticamente.
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tipo <span
+                                        class="text-red-500">*</span></label>
+                                <select name="nuevo_tipo" id="nuevo_tipo"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Laptop">Laptop</option>
+                                    <option value="PC">PC Escritorio</option>
+                                    <option value="Monitor">Monitor</option>
+                                    <option value="Movil">Celular/Tablet</option>
+                                    <option value="Impresora">Impresora</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Marca <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="nueva_marca" id="nueva_marca" placeholder="Ej: Dell"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Modelo <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="nuevo_modelo" id="nuevo_modelo" placeholder="Ej: Latitude 5420"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Serial <span
+                                        class="text-slate-400 font-normal">(Auto si vacío)</span></label>
+                                <input type="text" name="nuevo_serial" id="nuevo_serial" placeholder="SN..."
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 font-mono">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div id="div-info-equipo" class="hidden bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
                     <span id="info-equipo-texto"></span>
@@ -641,6 +907,7 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                             <option value="Preventivo">Preventivo</option>
                             <option value="Correctivo">Correctivo</option>
                             <option value="Upgrade">Upgrade</option>
+                            <option value="Preparacion">Preparación / Inicialización</option>
                         </select>
                     </div>
                     <div>
@@ -704,6 +971,26 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                                 class="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500">
                             Verificación Backup
                         </label>
+
+                        <!-- Nuevos para Preparación -->
+                        <label
+                            class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:bg-white p-2 rounded transition-colors text-indigo-700 font-medium">
+                            <input type="checkbox" name="checklist[formateo]"
+                                class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                            Formateo / Wiping
+                        </label>
+                        <label
+                            class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:bg-white p-2 rounded transition-colors text-indigo-700 font-medium">
+                            <input type="checkbox" name="checklist[instalacion_so]"
+                                class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                            Instalación S.O.
+                        </label>
+                        <label
+                            class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:bg-white p-2 rounded transition-colors text-indigo-700 font-medium">
+                            <input type="checkbox" name="checklist[configuracion_inicial]"
+                                class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                            Configuración Inicial (Apps/Correo)
+                        </label>
                     </div>
                 </div>
 
@@ -714,12 +1001,13 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                         placeholder="Detalles específicos del servicio..."></textarea>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" onclick="cerrarModalMantenimiento()"
-                        class="px-4 py-2 border rounded">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded">Guardar</button>
-                </div>
             </form>
+        </div>
+        <div class="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200 flex-shrink-0">
+            <button type="button" onclick="cerrarModalMantenimiento()"
+                class="px-4 py-2 border rounded hover:bg-white transition-colors">Cancelar</button>
+            <button type="submit" form="form-mantenimiento"
+                class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded shadow-lg shadow-amber-500/30 transition-all">Guardar</button>
         </div>
     </div>
 </div>
@@ -849,7 +1137,7 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                                 class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
                                 <option value="">Seleccionar Empresa...</option>
                                 <?php foreach ($empresas as $emp): ?>
-                                    <option value="<?= $emp['id'] ?>"><?= htmlspecialchars($emp['nombre']) ?></option>
+                                        <option value="<?= $emp['id'] ?>"><?= htmlspecialchars($emp['nombre']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -860,9 +1148,9 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                                 class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
                                 <option value="">Todas las Sucursales (Opcional)</option>
                                 <?php foreach ($sucursales as $suc): ?>
-                                    <option value="<?= $suc['id'] ?>" data-empresa="<?= $suc['empresa_id'] ?>">
-                                        <?= htmlspecialchars($suc['nombre']) ?>
-                                    </option>
+                                        <option value="<?= $suc['id'] ?>" data-empresa="<?= $suc['empresa_id'] ?>">
+                                            <?= htmlspecialchars($suc['nombre']) ?>
+                                        </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -906,15 +1194,24 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
 
 <script>
     // Filtro Equipos en Modal
+    // Filtro Equipos en Modal
     function filtrarEquipos() {
         var input = document.getElementById("filtro_equipo_input");
         var filter = input.value.toUpperCase();
+        var checkSinAsignar = document.getElementById("check_sin_asignar");
+        var soloSinAsignar = checkSinAsignar ? checkSinAsignar.checked : false;
+
         var select = document.getElementById("equipo_id");
         var options = select.getElementsByTagName("option");
 
         for (var i = 1; i < options.length; i++) { // Skip "Seleccionar..."
             var txtValue = options[i].textContent || options[i].innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            var isAsignado = options[i].getAttribute('data-asignado') === '1';
+
+            var matchesText = txtValue.toUpperCase().indexOf(filter) > -1;
+            var matchesFilter = !soloSinAsignar || !isAsignado;
+
+            if (matchesText && matchesFilter) {
                 options[i].style.display = "";
             } else {
                 options[i].style.display = "none";
@@ -924,6 +1221,9 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
 
     // Scripts Modal Mantenimiento (Existentes)
     function abrirModalMantenimiento() {
+        // Resetear a modo buscar por defecto
+        toggleModoEquipo('buscar');
+
         document.getElementById('form-accion').value = 'registrar_mantenimiento';
         document.getElementById('mantenimiento-id').value = '';
         document.getElementById('modal-titulo').innerHTML = '<i class="ri-tools-fill"></i> Registrar Mantenimiento';
@@ -958,6 +1258,9 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
     }
 
     function editarMantenimiento(data) {
+        // Resetear a modo buscar (siempre editamos uno existente)
+        toggleModoEquipo('buscar');
+
         document.getElementById('form-accion').value = 'actualizar_mantenimiento';
         document.getElementById('mantenimiento-id').value = data.id;
         document.getElementById('modal-titulo').innerHTML = '<i class="ri-edit-line"></i> Editar Mantenimiento';
@@ -1011,6 +1314,60 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
 
     function cerrarModalSpecs() {
         document.getElementById('modalSpecs').classList.add('hidden');
+    }
+
+    // [NEW] Toggle Modo Equipo (Buscar vs Nuevo)
+    function toggleModoEquipo(modo) {
+        const btnBuscar = document.getElementById('btn-modo-buscar');
+        const btnNuevo = document.getElementById('btn-modo-nuevo');
+        const divBuscar = document.getElementById('modo-buscar-container');
+        const divNuevo = document.getElementById('modo-nuevo-container');
+
+        const inputEquipo = document.getElementById('equipo_id');
+        const inputTipo = document.getElementById('nuevo_tipo');
+        const inputMarca = document.getElementById('nueva_marca');
+        const inputModelo = document.getElementById('nuevo_modelo');
+
+        if (modo === 'buscar') {
+            // Estilos Botones
+            btnBuscar.className = "flex-1 px-3 py-1.5 rounded-md text-sm font-bold transition-all bg-white text-indigo-600 shadow-sm";
+            btnNuevo.className = "flex-1 px-3 py-1.5 rounded-md text-sm font-bold text-slate-500 hover:text-indigo-600 transition-all";
+
+            // Visibilidad
+            divBuscar.classList.remove('hidden');
+            divNuevo.classList.add('hidden');
+
+            // Requireds
+            inputEquipo.required = true;
+            inputTipo.required = false;
+            inputMarca.required = false;
+            inputModelo.required = false;
+
+            // Limpiar valores nuevos
+            inputTipo.value = "";
+            inputMarca.value = "";
+            inputModelo.value = "";
+            document.getElementById('nuevo_serial').value = "";
+
+        } else {
+            // Estilos Botones
+            btnNuevo.className = "flex-1 px-3 py-1.5 rounded-md text-sm font-bold transition-all bg-white text-indigo-600 shadow-sm";
+            btnBuscar.className = "flex-1 px-3 py-1.5 rounded-md text-sm font-bold text-slate-500 hover:text-indigo-600 transition-all";
+
+            // Visibilidad
+            divNuevo.classList.remove('hidden');
+            divBuscar.classList.add('hidden');
+
+            // Requireds
+            inputEquipo.required = false;
+            inputEquipo.value = ""; // Resetear selección
+            inputTipo.required = true;
+            inputMarca.required = true;
+            inputModelo.required = true;
+
+            // Ocultar info equipo si estaba mostrada
+            document.getElementById('div-info-equipo').classList.add('hidden');
+        }
     }
 
     function guardarSpecs(e) {
@@ -1095,32 +1452,37 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
 
 <!-- Modal Ejecución Visita -->
 <div id="modalEjecucion" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="cerrarModalEjecucion()"></div>
+    <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="cerrarModalEjecucion()">
+    </div>
     <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl h-[90vh] flex flex-col">
-                
-                <form id="formEjecucion" onsubmit="enviarReporteVisita(event)" class="flex flex-col h-full">
+            <div
+                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl max-h-[90vh] flex flex-col">
+
+                <form id="formEjecucion" method="POST" onsubmit="enviarReporteVisita(event)"
+                    class="flex flex-col w-full h-full overflow-hidden">
                     <input type="hidden" name="accion" value="guardar_reporte_masivo">
                     <input type="hidden" name="view" value="mantenimiento_equipos">
                     <input type="hidden" name="visita_id" id="exec_visita_id">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
 
                     <!-- Header -->
-                    <div class="bg-indigo-700 px-6 py-4 flex justify-between items-center shrink-0">
+                    <div class="bg-indigo-700 px-6 py-4 flex justify-between items-center shrink-0 rounded-t-2xl">
                         <div>
                             <h3 class="text-xl font-bold text-white flex items-center gap-2">
                                 <i class="ri-clipboard-line"></i> Ejecución de Visita
                             </h3>
                             <p class="text-indigo-200 text-sm" id="exec_titulo">...</p>
                         </div>
-                        <button type="button" onclick="cerrarModalEjecucion()" class="text-white/80 hover:text-white bg-white/10 p-2 rounded-full hover:bg-white/20 transition">
+                        <button type="button" onclick="cerrarModalEjecucion()"
+                            class="text-white/80 hover:text-white bg-white/10 p-2 rounded-full hover:bg-white/20 transition">
                             <i class="ri-close-line text-2xl"></i>
                         </button>
                     </div>
 
                     <!-- Toolbar -->
-                    <div class="bg-indigo-50 px-6 py-3 border-b border-indigo-100 flex justify-between items-center shrink-0">
+                    <div
+                        class="bg-indigo-50 px-6 py-3 border-b border-indigo-100 flex justify-between items-center shrink-0">
                         <p class="text-xs font-bold text-indigo-800 uppercase">Lista de Activos</p>
                         <div class="text-xs text-indigo-600 italic">
                             Marca los equipos revisados y añade notas si existen incidentes.
@@ -1133,13 +1495,16 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                     </div>
 
                     <!-- Footer -->
-                    <div class="bg-white px-6 py-4 border-t border-slate-200 flex justify-between items-center shrink-0">
+                    <div
+                        class="bg-white px-6 py-4 border-t border-slate-200 flex justify-between items-center shrink-0">
                         <div class="text-xs text-slate-500">
                             Solo se generarán historiales para los items marcados.
                         </div>
                         <div class="flex gap-3">
-                            <button type="button" onclick="cerrarModalEjecucion()" class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                            <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-lg shadow-indigo-500/30 flex items-center gap-2">
+                            <button type="button" onclick="cerrarModalEjecucion()"
+                                class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                            <button type="submit"
+                                class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-lg shadow-indigo-500/30 flex items-center gap-2">
                                 <i class="ri-save-3-line text-lg"></i> Finalizar y Generar Reporte
                             </button>
                         </div>
@@ -1160,15 +1525,15 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
         document.getElementById('exec_visita_id').value = id;
         document.getElementById('exec_titulo').textContent = titulo;
         document.getElementById('modalEjecucion').classList.remove('hidden');
-        
+
         const container = document.getElementById('lista-equipos-visita');
         container.innerHTML = '<div class="flex h-full items-center justify-center gap-3 text-indigo-600"><i class="ri-loader-4-line text-3xl animate-spin"></i><span class="font-medium animate-pulse">Cargando inventario de la sede...</span></div>';
-        
+
         try {
             const res = await fetch(`index.php?view=mantenimiento_equipos&ajax_action=obtener_equipos_visita&empresa_id=${emp}&sucursal_id=${suc}`);
             const data = await res.json();
-            
-            if(!data || data.length === 0) {
+
+            if (!data || data.length === 0) {
                 container.innerHTML = `
                     <div class="h-full flex flex-col items-center justify-center text-slate-400">
                         <i class="ri-ghost-line text-6xl mb-4 text-slate-300"></i>
@@ -1187,13 +1552,14 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                             </th>
                             <th class="p-4 border-b">Equipo</th>
                             <th class="p-4 border-b">Asignado</th>
+                            <th class="p-4 border-b w-48">Técnico / Taller</th>
                             <th class="p-4 border-b w-32">Estado Final</th>
-                            <th class="p-4 border-b">Observaciones / Incidencias</th>
+                            <th class="p-4 border-b">Observaciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
             `;
-            
+
             data.forEach((eq, idx) => {
                 html += `
                     <tr class="bg-white hover:bg-indigo-50/30 transition-colors group">
@@ -1209,13 +1575,17 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                         <td class="p-4 align-top">
                             <div class="flex items-center gap-2">
                                 <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs ring-2 ring-white shadow-sm">
-                                    ${eq.usuario_asignado.substring(0,2).toUpperCase()}
+                                    ${eq.usuario_asignado.substring(0, 2).toUpperCase()}
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-slate-700">${eq.usuario_asignado}</p>
                                     <p class="text-[10px] text-slate-400 uppercase tracking-wide">Usuario Final</p>
                                 </div>
                             </div>
+                        </td>
+                        <td class="p-4 align-top">
+                            <input type="text" name="equipos[${idx}][tecnico_externo]" placeholder="Nombre Técnico..." 
+                                class="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none placeholder-slate-300">
                         </td>
                         <td class="p-4 align-top">
                             <select name="equipos[${idx}][estado]" class="w-full px-2 py-1.5 text-xs font-bold rounded border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
@@ -1226,17 +1596,17 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
                             </select>
                         </td>
                         <td class="p-4 align-top">
-                            <textarea name="equipos[${idx}][notas]" rows="2" placeholder="Todo en orden..." 
+                            <textarea name="equipos[${idx}][notas]" rows="2" placeholder="Notas..." 
                                 class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-shadow placeholder-slate-300"></textarea>
                         </td>
                     </tr>
                 `;
             });
-            
+
             html += '</tbody></table>';
             container.innerHTML = html;
-            
-        } catch(e) {
+
+        } catch (e) {
             console.log(e);
             container.innerHTML = '<div class="p-10 text-center text-red-500 font-bold">Error de conexión al cargar inventario.</div>';
         }
@@ -1256,19 +1626,166 @@ $active_tab = $_GET['tab'] ?? 'reporte'; // 'reporte' or 'tickets'
     }
 </script>
 
+<!-- Modal Detalles Mantenimiento -->
+<div id="modal-detalles-mantenimiento"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden">
+        <div class="bg-blue-600 px-6 py-4 flex justify-between items-center flex-shrink-0">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="ri-file-info-line"></i> Detalles del Servicio
+            </h3>
+            <button onclick="cerrarModalDetalles()" class="text-white/80 hover:text-white transition-colors">
+                <i class="ri-close-line text-2xl"></i>
+            </button>
+        </div>
+        <div class="overflow-y-auto p-6 flex-grow space-y-4" id="contenido-detalles">
+            <!-- Contenido dinámico via JS -->
+        </div>
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+            <button onclick="cerrarModalDetalles()"
+                class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function verDetallesMantenimiento(data) {
+        const modal = document.getElementById('modal-detalles-mantenimiento');
+        const contenido = document.getElementById('contenido-detalles');
+
+        // Parse checklist if it's JSON/String
+        let checklistHtml = '';
+        try {
+            let checklistObj = (typeof data.checklist === 'string' && data.checklist.trim() !== '') ? JSON.parse(data.checklist) : data.checklist;
+
+            if (checklistObj && typeof checklistObj === 'object' && Object.keys(checklistObj).length > 0) {
+                checklistHtml = '<div class="grid grid-cols-2 gap-2 mt-2 bg-slate-50 p-3 rounded-lg border border-slate-200">';
+                for (const [key, value] of Object.entries(checklistObj)) {
+                    if (value === 'on' || value === true || value === 'true') {
+                        // Formatear key (reemplazar _ por espacio y capitalizar)
+                        let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        checklistHtml += `<div class="flex items-center gap-2 text-xs text-slate-700"><i class="ri-checkbox-circle-fill text-green-500"></i> <span class="font-medium">${label}</span></div>`;
+                    }
+                }
+                checklistHtml += '</div>';
+            } else {
+                checklistHtml = '<p class="text-xs text-slate-400 italic mt-1">No se marcaron items en el checklist.</p>';
+            }
+        } catch (e) {
+            checklistHtml = '<p class="text-xs text-slate-400 italic mt-1">Sin datos de checklist.</p>';
+            console.error('Error parsing checklist', e);
+        }
+
+        contenido.innerHTML = `
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Equipo / Activo</p>
+                <p class="font-bold text-slate-800 text-lg">${data.equipo_tipo} ${data.marca}</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-500 border border-slate-200">${data.serial}</span>
+                    <span class="text-xs text-slate-500">${data.modelo}</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estado del Ticket</p>
+                 <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-amber-100 text-amber-700 mt-1 border border-amber-200 shadow-sm">${data.estado}</span>
+            </div>
+        </div>
+
+        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10">
+                <i class="ri-tools-fill text-6xl text-indigo-600"></i>
+            </div>
+            <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Tipo de Servicio</p>
+            <p class="text-xl font-bold text-indigo-900">${data.tipo_mantenimiento}</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i class="ri-alert-line text-red-500"></i> Problema Reportado
+                </p>
+                <p class="text-sm text-slate-700 leading-relaxed">${data.descripcion_problema || '<span class="italic text-slate-400">Sin descripción</span>'}</p>
+            </div>
+             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                     <i class="ri-checkbox-circle-line text-emerald-500"></i> Solución / Observaciones
+                </p>
+                <p class="text-sm text-slate-700 leading-relaxed">${data.descripcion_solucion || '<span class="italic text-slate-400">Sin solución registrada</span>'}</p>
+            </div>
+        </div>
+
+        <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 mb-2">Protocolo de Servicio</p>
+            ${checklistHtml}
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-4 text-xs text-slate-500">
+            <div>
+                <span class="font-bold block text-slate-400 uppercase text-[10px]">Fecha Inicio</span> 
+                ${data.fecha_inicio ? data.fecha_inicio : '---'}
+            </div>
+            <div>
+                <span class="font-bold block text-slate-400 uppercase text-[10px]">Fecha Fin</span> 
+                ${data.fecha_fin ? data.fecha_fin : '---'}
+            </div>
+            <div>
+                <span class="font-bold block text-slate-400 uppercase text-[10px]">Técnico</span> 
+                ${data.tecnico_nombre ? data.tecnico_nombre : '---'}
+            </div>
+        </div>
+    `;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function cerrarModalDetalles() {
+        const modal = document.getElementById('modal-detalles-mantenimiento');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
+
 <?php if (isset($_SESSION['mensaje'])): ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            Swal.fire({
-                icon: '<?= $_SESSION['tipo_mensaje'] ?? 'info' ?>',
-                title: '<?= $_SESSION['tipo_mensaje'] == 'error' || $_SESSION['tipo_mensaje'] == 'warning' ? 'Atención' : 'Éxito' ?>',
-                text: '<?= str_replace(["\r", "\n"], " ", addslashes($_SESSION['mensaje'])) ?>',
-                confirmButtonColor: '#4F46E5',
-                confirmButtonText: 'Entendido'
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: '<?= $_SESSION['tipo_mensaje'] ?? 'info' ?>',
+                    title: '<?= $_SESSION['tipo_mensaje'] == 'error' || $_SESSION['tipo_mensaje'] == 'warning' ? 'Atención' : 'Éxito' ?>',
+                    text: '<?= str_replace(["\r", "\n"], " ", addslashes($_SESSION['mensaje'])) ?>',
+                    confirmButtonColor: '#4F46E5',
+                    confirmButtonText: 'Entendido'
+                });
             });
-        });
-    </script>
-    <?php
-    unset($_SESSION['mensaje']);
-    unset($_SESSION['tipo_mensaje']);
+        </script>
+        <?php
+        unset($_SESSION['mensaje']);
+        unset($_SESSION['tipo_mensaje']);
 endif; ?>
+
+<?php if (isset($_GET['print_report'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const reportUrl = 'imprimir_reporte_visita.php?id=<?= intval($_GET['print_report']) ?>';
+
+                // Intentar abrir
+                const newWindow = window.open(reportUrl, '_blank');
+
+                // Mostrar alerta de éxito siempre (mejor experiencia) y link si falló popup
+                Swal.fire({
+                    title: '¡Reporte Generado!',
+                    text: 'El mantenimiento se ha guardado correctamente. Haz clic para ver el PDF.',
+                    icon: 'success',
+                    confirmButtonText: '<i class="ri-printer-line"></i> Ver Reporte',
+                    confirmButtonColor: '#4F46E5',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cerrar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.open(reportUrl, '_blank');
+                    }
+                });
+            });
+        </script>
+<?php endif; ?>

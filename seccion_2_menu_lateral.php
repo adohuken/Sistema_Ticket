@@ -12,6 +12,7 @@ $mapa_enlaces = [
     'mis_tickets' => ['href' => 'index.php?view=mis_tickets', 'label' => 'Mis Tickets', 'icon' => 'ri-ticket-line', 'grupo' => ''],
     'mis_tareas' => ['href' => 'index.php?view=asignados', 'label' => 'Tickets Asignados', 'icon' => 'ri-checkbox-multiple-line', 'grupo' => ''],
     'colaboradores' => ['href' => 'index.php?view=colaboradores', 'label' => 'Directorio', 'icon' => 'ri-team-fill', 'grupo' => ''],
+    'notificaciones' => ['href' => 'index.php?view=notificaciones', 'label' => 'Notificaciones', 'icon' => 'ri-notification-3-line', 'grupo' => ''],
 
     // Administración
     'gestion_usuarios' => ['href' => 'index.php?view=usuarios', 'label' => 'Gestión Usuarios', 'icon' => 'ri-team-line', 'grupo' => 'Administración'],
@@ -37,15 +38,14 @@ $mapa_enlaces = [
     // Reportes
     'reportes' => ['href' => 'index.php?view=reportes_nuevo', 'label' => 'Reportes', 'icon' => 'ri-pie-chart-2-line', 'grupo' => 'Reportes'],
     'seguimiento_tickets' => ['href' => 'index.php?view=seguimiento', 'label' => 'Seguimiento Tickets', 'icon' => 'ri-line-chart-line', 'grupo' => 'Reportes'],
+    'historial_tecnico' => ['href' => 'index.php?view=historial_tecnico', 'label' => 'Historial Técnico', 'icon' => 'ri-history-line', 'grupo' => 'Reportes'],
+    'estadisticas_globales' => ['href' => 'index.php?view=estadisticas_globales', 'label' => 'Estadísticas Globales', 'icon' => 'ri-bar-chart-grouped-line', 'grupo' => 'Reportes'],
 
     // Sistema
     'backup_bd' => ['href' => 'index.php?view=backup', 'label' => 'Backup BD', 'icon' => 'ri-database-2-line', 'grupo' => 'Sistema'],
     'restaurar_bd' => ['href' => 'index.php?view=restore', 'label' => 'Restaurar BD', 'icon' => 'ri-refresh-line', 'grupo' => 'Sistema'],
     'reiniciar_bd' => ['href' => 'index.php?view=restart', 'label' => 'Reiniciar BD', 'icon' => 'ri-restart-line', 'grupo' => 'Sistema'],
     'configuracion' => ['href' => 'index.php?view=config', 'label' => 'Configuración', 'icon' => 'ri-settings-3-line', 'grupo' => 'Sistema'],
-
-    // Nuevo Módulo Estadísticas
-    'estadisticas_globales' => ['href' => 'index.php?view=estadisticas_globales', 'label' => 'Estadísticas Globales', 'icon' => 'ri-bar-chart-grouped-line', 'grupo' => 'Reportes'],
 ];
 
 // Obtener permisos del usuario actual (ROL + ESPECÍFICOS)
@@ -87,6 +87,11 @@ try {
 // Construir lista de enlaces visibles
 $enlaces_visibles = [];
 foreach ($permisos_usuario as $permiso) {
+    // PROTECCIÓN HARDCODED: Configuración solo para SuperAdmin
+    if ($permiso === 'configuracion' && $rol_usuario !== 'SuperAdmin') {
+        continue;
+    }
+
     if (isset($mapa_enlaces[$permiso])) {
         $enlace = $mapa_enlaces[$permiso];
 
@@ -111,53 +116,14 @@ foreach ($enlaces_visibles as $enlace) {
     $enlaces_por_grupo[$grupo][] = $enlace;
 }
 
-// Inyección manual de enlaces obligatorios (sin requerir cambio en BD de permisos)
-if ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin' || $rol_usuario === 'Tecnico') {
-    // 1. Historial Técnico
-    if (!isset($enlaces_por_grupo['Reportes'])) {
-        $enlaces_por_grupo['Reportes'] = [];
-    }
-    $existe_historial = false;
-    foreach ($enlaces_por_grupo['Reportes'] as $e) {
-        if ($e['href'] === 'index.php?view=historial_tecnico')
-            $existe_historial = true;
-    }
-    if (!$existe_historial) {
-        $enlaces_por_grupo['Reportes'][] = [
-            'href' => 'index.php?view=historial_tecnico',
-            'label' => 'Historial Técnico',
-            'icon' => 'ri-history-line',
-            'grupo' => 'Reportes'
-        ];
-    }
-
-    // 2. Tickets Asignados (Solo Admin y Técnico)
-    if ($rol_usuario != 'SuperAdmin') {
-        $existe_tareas = false;
-        if (isset($enlaces_por_grupo[''])) {
-            foreach ($enlaces_por_grupo[''] as $e) {
-                if ($e['href'] === 'index.php?view=asignados')
-                    $existe_tareas = true;
-            }
-        }
-        if (!$existe_tareas) {
-            // Insertar después de Mis Tickets para orden lógico
-            $enlaces_por_grupo[''][] = [
-                'href' => 'index.php?view=asignados',
-                'label' => 'Tickets Asignados',
-                'icon' => 'ri-checkbox-multiple-line',
-                'grupo' => ''
-            ];
-        }
-    }
-}
+// Menú 100% controlado por BD — sin inyecciones hardcodeadas.
 ?>
 <aside
     class="w-72 bg-slate-900 text-slate-300 h-screen fixed inset-y-0 left-0 overflow-y-auto border-r border-slate-800 shadow-2xl z-20 transition-all duration-300">
     <!-- Logo Area -->
     <div
         class="h-20 flex items-center px-8 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div class="flex items-center gap-3">
+        <a href="index.php?view=dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div
                 class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <i class="ri-ticket-2-fill text-white text-xl"></i>
@@ -166,7 +132,7 @@ if ($rol_usuario === 'Admin' || $rol_usuario === 'SuperAdmin' || $rol_usuario ==
                 <h1 class="font-bold text-white text-lg leading-tight">TicketSys</h1>
                 <p class="text-xs text-slate-500 font-medium">Gestión Inteligente</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <nav class="p-4 mt-4">

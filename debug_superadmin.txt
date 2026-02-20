@@ -1,0 +1,3 @@
+Inserted: mis_tareas (19)
+Inserted: rrhh_bajas (22)
+Sync completed. 2 permissions added to SuperAdmin.

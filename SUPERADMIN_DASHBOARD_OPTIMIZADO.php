@@ -51,7 +51,7 @@ if ($rol_usuario === 'SuperAdmin') {
                         <p class="text-purple-100 text-sm font-medium">Total Usuarios</p>
                         <p class="text-3xl font-bold"><?= $total_usuarios ?></p>
                     </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <div class="bg-white bg-opacity-20 rounded-full flex-shrink-0" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                         <i class="ri-user-line text-2xl"></i>
                     </div>
                 </div>
@@ -68,7 +68,7 @@ if ($rol_usuario === 'SuperAdmin') {
                         <p class="text-blue-100 text-sm font-medium">Total Tickets</p>
                         <p class="text-3xl font-bold"><?= $total_tickets ?></p>
                     </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <div class="bg-white bg-opacity-20 rounded-full flex-shrink-0" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                         <i class="ri-ticket-line text-2xl"></i>
                     </div>
                 </div>
@@ -85,7 +85,7 @@ if ($rol_usuario === 'SuperAdmin') {
                         <p class="text-pink-100 text-sm font-medium">Formularios RRHH</p>
                         <p class="text-3xl font-bold"><?= $total_rrhh ?></p>
                     </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <div class="bg-white bg-opacity-20 rounded-full flex-shrink-0" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                         <i class="ri-user-star-line text-2xl"></i>
                     </div>
                 </div>
@@ -102,7 +102,7 @@ if ($rol_usuario === 'SuperAdmin') {
                         <p class="text-emerald-100 text-sm font-medium">Categorías</p>
                         <p class="text-3xl font-bold"><?= $total_categorias ?></p>
                     </div>
-                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <div class="bg-white bg-opacity-20 rounded-full flex-shrink-0" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
                         <i class="ri-folder-line text-2xl"></i>
                     </div>
                 </div>

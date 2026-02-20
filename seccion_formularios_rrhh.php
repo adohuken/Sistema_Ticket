@@ -28,6 +28,7 @@
         <?php
         $total_ingresos = count(array_filter($formularios, fn($f) => $f['tipo'] === 'Ingreso'));
         $total_salidas = count(array_filter($formularios, fn($f) => $f['tipo'] === 'Salida'));
+        $total_licencias = count(array_filter($formularios, fn($f) => $f['tipo'] === 'Licencia'));
         $total_formularios = count($formularios);
         ?>
 
@@ -58,7 +59,19 @@
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-purple-100 text-sm font-medium">Total Formularios</p>
+                    <p class="text-purple-100 text-sm font-medium">Total Licencias</p>
+                    <p class="text-4xl font-bold mt-2"><?= $total_licencias ?></p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-4 rounded-full">
+                    <i class="ri-shield-keyhole-line text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-emerald-100 text-sm font-medium">Total Formularios</p>
                     <p class="text-4xl font-bold mt-2"><?= $total_formularios ?></p>
                 </div>
                 <div class="bg-white bg-opacity-20 p-4 rounded-full">
@@ -69,7 +82,7 @@
     </div>
 
     <!-- Filtros -->
-    <div class="bg-white rounded-xl shadow-lg p-4 mb-6 flex gap-4 items-center">
+    <div class="bg-white rounded-xl shadow-lg p-4 mb-6 flex gap-4 items-center flex-wrap">
         <label class="text-sm font-bold text-slate-700">Filtrar por tipo:</label>
         <button onclick="filtrarFormularios('todos')" id="btn-todos"
             class="px-4 py-2 rounded-lg bg-slate-600 text-white font-semibold">Todos</button>
@@ -77,6 +90,8 @@
             class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-blue-100">Ingresos</button>
         <button onclick="filtrarFormularios('Salida')" id="btn-salida"
             class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-red-100">Salidas</button>
+        <button onclick="filtrarFormularios('Licencia')" id="btn-licencia"
+            class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-purple-100">Licencias</button>
     </div>
 
     <!-- Tabla de Formularios -->
@@ -111,6 +126,11 @@
                                         <span
                                             class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200 flex items-center w-fit gap-1">
                                             <i class="ri-user-add-line"></i> Ingreso
+                                        </span>
+                                    <?php elseif ($f['tipo'] === 'Licencia'): ?>
+                                        <span
+                                            class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200 flex items-center w-fit gap-1">
+                                            <i class="ri-shield-keyhole-line"></i> Licencia
                                         </span>
                                     <?php else: ?>
                                         <span
@@ -158,6 +178,12 @@
                                                 title="Ver Acta Informativa (Sin Firma)">
                                                 <i class="ri-file-info-line"></i>
                                             </a>
+                                        <?php elseif ($f['tipo'] === 'Licencia'): ?>
+                                            <a href="imprimir_acta_licencia.php?id=<?= $f['id'] ?>" target="_blank"
+                                                class="text-purple-600 hover:text-purple-800 font-semibold text-sm flex items-center gap-1 bg-purple-50 px-3 py-1.5 rounded transition hover:bg-purple-100"
+                                                title="Ver Acta de Entrega">
+                                                <i class="ri-printer-line"></i>
+                                            </a>
                                         <?php else: ?>
                                             <a href="imprimir_acta_salida.php?id=<?= $f['id'] ?>" target="_blank"
                                                 class="text-teal-600 hover:text-teal-800 font-semibold text-sm flex items-center gap-1 bg-teal-50 px-3 py-1.5 rounded transition hover:bg-teal-100"
@@ -203,12 +229,13 @@
         const buttons = {
             'todos': document.getElementById('btn-todos'),
             'Ingreso': document.getElementById('btn-ingreso'),
-            'Salida': document.getElementById('btn-salida')
+            'Salida': document.getElementById('btn-salida'),
+            'Licencia': document.getElementById('btn-licencia')
         };
 
         // Resetear estilos de botones
         Object.values(buttons).forEach(btn => {
-            btn.classList.remove('bg-slate-600', 'text-white', 'bg-blue-600', 'bg-red-600');
+            btn.classList.remove('bg-slate-600', 'text-white', 'bg-blue-600', 'bg-red-600', 'bg-purple-600');
             btn.classList.add('bg-slate-200', 'text-slate-700');
         });
 
@@ -219,7 +246,11 @@
             rows.forEach(row => row.style.display = '');
         } else {
             buttons[tipo].classList.remove('bg-slate-200', 'text-slate-700');
-            buttons[tipo].classList.add(tipo === 'Ingreso' ? 'bg-blue-600' : 'bg-red-600', 'text-white');
+            let colorClass = 'bg-blue-600';
+            if (tipo === 'Salida') colorClass = 'bg-red-600';
+            if (tipo === 'Licencia') colorClass = 'bg-purple-600';
+
+            buttons[tipo].classList.add(colorClass, 'text-white');
             rows.forEach(row => {
                 row.style.display = row.dataset.tipo === tipo ? '' : 'none';
             });
@@ -274,32 +305,49 @@
                  </div>`;
             }
 
-        } else {
-            html += `<div class="grid grid-cols-2 gap-4 mb-4">
+        } else if (data.tipo === 'Licencia') {
+        html += `<div class="grid grid-cols-2 gap-4 mb-4">
+                ${row('Fecha Solicitud', data.fecha_solicitud)}
+                ${row('Beneficiario', data.nombre_colaborador)}
+                ${row('Departamento', data.cargo_zona)}
+             </div>`;
+
+        html += `<h4 class="font-bold text-purple-600 mt-4 mb-2 border-b border-purple-100 pb-1">Detalle de Licencia</h4>`;
+        html += row('Tipo Licencia', data.detalle_licencias);
+
+        if (data.otras_indicaciones) {
+            html += `<div class="mt-4 bg-purple-50 p-4 rounded-lg border border-purple-100">
+                    <div class="font-bold text-purple-800 mb-1">Justificación / Notas:</div>
+                    <div class="text-purple-900">${data.otras_indicaciones}</div>
+                 </div>`;
+        }
+
+    } else {
+        html += `<div class="grid grid-cols-2 gap-4 mb-4">
                 ${row('Fecha Efectiva', data.fecha_efectiva)}
                 ${row('Cédula / Teléfono', data.cedula_telefono)}
                 ${row('Cargo / Zona', data.cargo_zona)}
              </div>`;
 
-            html += `<h4 class="font-bold text-red-600 mt-4 mb-2 border-b border-red-100 pb-1">Cierre de Accesos</h4>`;
-            html += row('Bloqueo Correo', data.bloqueo_correo, data.cuenta_correo_bloqueo);
-            html += row('Respaldo Info', data.respaldo_info, data.detalle_respaldo_salida);
-            html += row('Redirección', data.redireccion_correo, data.email_redireccion);
+        html += `<h4 class="font-bold text-red-600 mt-4 mb-2 border-b border-red-100 pb-1">Cierre de Accesos</h4>`;
+        html += row('Bloqueo Correo', data.bloqueo_correo, data.cuenta_correo_bloqueo);
+        html += row('Respaldo Info', data.respaldo_info, data.detalle_respaldo_salida);
+        html += row('Redirección', data.redireccion_correo, data.email_redireccion);
 
-            html += `<h4 class="font-bold text-red-600 mt-4 mb-2 border-b border-red-100 pb-1">Devolución</h4>`;
-            html += row('Devolución PC', data.devolucion_equipo, data.detalle_devolucion_equipo);
-            html += row('Devolución Móvil', data.devolucion_movil, data.detalle_devolucion_movil);
+        html += `<h4 class="font-bold text-red-600 mt-4 mb-2 border-b border-red-100 pb-1">Devolución</h4>`;
+        html += row('Devolución PC', data.devolucion_equipo, data.detalle_devolucion_equipo);
+        html += row('Devolución Móvil', data.devolucion_movil, data.detalle_devolucion_movil);
 
-            if (data.observaciones) {
-                html += `<div class="mt-4 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+        if (data.observaciones) {
+            html += `<div class="mt-4 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
                     <div class="font-bold text-yellow-800 mb-1">Observaciones:</div>
                     <div class="text-yellow-900">${data.observaciones}</div>
                  </div>`;
-            }
         }
+    }
 
-        contenido.innerHTML = html;
-        modal.classList.remove('hidden');
+    contenido.innerHTML = html;
+    modal.classList.remove('hidden');
     }
 
     function cerrarModalRRHH() {

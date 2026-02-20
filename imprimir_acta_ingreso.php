@@ -19,9 +19,11 @@ if (!$id) {
 // Obtener datos del formulario y empresa del creador
 try {
     $stmt = $pdo->prepare("
-        SELECT f.*, u.nombre_completo as nombre_registrador, u.empresa_asignada
+        SELECT f.*, u.nombre_completo as nombre_registrador, u.empresa_id,
+               e.nombre as empresa_nombre, e.logo_key
         FROM formularios_rrhh f
         LEFT JOIN usuarios u ON f.creado_por = u.id
+        LEFT JOIN empresas e ON u.empresa_id = e.id
         WHERE f.id = ? AND f.tipo = 'Ingreso'
     ");
     $stmt->execute([$id]);
@@ -31,32 +33,14 @@ try {
         die("Solicitud de Ingreso no encontrada.");
     }
 
-    // Obtener logo según empresa asignada del usuario
+    // Obtener logo según empresa_id del usuario (dinámico desde BD)
     $logo_a_mostrar = null;
-    $nombre_empresa = '';
+    $nombre_empresa = $solicitud['empresa_nombre'] ?? '';
 
-    if (!empty($solicitud['empresa_asignada'])) {
-        // Mapeo de empresa a clave de logo
-        $logo_map = [
-            'mastertec' => 'logo_mastertec',
-            'suministros' => 'logo_master_suministros',
-            'centro' => 'logo_centro'
-        ];
-
-        $nombre_map = [
-            'mastertec' => 'MasterTec',
-            'suministros' => 'Master Suministros',
-            'centro' => 'Centro'
-        ];
-
-        $logo_key = $logo_map[$solicitud['empresa_asignada']] ?? null;
-        $nombre_empresa = $nombre_map[$solicitud['empresa_asignada']] ?? '';
-
-        if ($logo_key) {
-            $stmt_logo = $pdo->prepare("SELECT valor FROM configuracion_sistema WHERE clave = ?");
-            $stmt_logo->execute([$logo_key]);
-            $logo_a_mostrar = $stmt_logo->fetchColumn();
-        }
+    if (!empty($solicitud['logo_key'])) {
+        $stmt_logo = $pdo->prepare("SELECT valor FROM configuracion_sistema WHERE clave = ?");
+        $stmt_logo->execute([$solicitud['logo_key']]);
+        $logo_a_mostrar = $stmt_logo->fetchColumn();
     }
 
 } catch (PDOException $e) {

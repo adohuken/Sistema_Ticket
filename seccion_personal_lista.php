@@ -17,7 +17,7 @@ try {
 }
 
 // Determinar contexto de usuario
-$es_superadmin = ($_SESSION['usuario_rol'] ?? '') === 'SuperAdmin';
+$es_superadmin = in_array(($_SESSION['usuario_rol'] ?? ''), ['SuperAdmin', 'Admin']);
 $usuario_empresa_id = $_SESSION['usuario_empresa_id'] ?? null;
 $usuario_id = $_SESSION['usuario_id'] ?? null;
 
@@ -147,11 +147,11 @@ if (!$es_superadmin) {
         $sql_stats .= " AND empresa_id = ?";
         $params_stats[] = $usuario_empresa_id;
     } else {
-        // SIN PERMISOS
+        // SIN PERMISOS ESPECÍFICOS → 0 resultados (no aplica a Admin/SuperAdmin)
         $sql_stats .= " AND 1=0";
     }
 }
-// Si es SuperAdmin, ve TOTAL GLOBAL (no aplicamos ningún WHERE adicional)
+// Si es Admin/SuperAdmin, ve TOTAL GLOBAL (no aplicamos ningún WHERE adicional)
 
 // Agrupar y Ejecutar
 $sql_stats .= " GROUP BY estado";

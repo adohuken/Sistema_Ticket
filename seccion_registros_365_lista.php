@@ -121,7 +121,8 @@ foreach ($cuentas as $c) {
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+            <a href="index.php?view=registros_365"
+                class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer block">
                 <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl">
                     <i class="ri-mail-line"></i>
                 </div>
@@ -131,8 +132,9 @@ foreach ($cuentas as $c) {
                     </h3>
                     <p class="text-sm text-slate-500">Total Cuentas</p>
                 </div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+            </a>
+            <a href="index.php?view=registros_365&estado=Activo"
+                class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer block">
                 <div class="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-2xl">
                     <i class="ri-checkbox-circle-line"></i>
                 </div>
@@ -142,8 +144,9 @@ foreach ($cuentas as $c) {
                     </h3>
                     <p class="text-sm text-slate-500">Activas</p>
                 </div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+            </a>
+            <a href="index.php?view=registros_365&asignacion=no_asignado"
+                class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer block">
                 <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl">
                     <i class="ri-user-unfollow-line"></i>
                 </div>
@@ -153,7 +156,7 @@ foreach ($cuentas as $c) {
                     </h3>
                     <p class="text-sm text-slate-500">Sin Asignar</p>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- Filtros -->
@@ -332,137 +335,313 @@ foreach ($cuentas as $c) {
                                                 <div class="flex items-center justify-between">
                                                     <span class="text-xs text-slate-500">Pass 365:</span>
                                                     <code class="text-xs bg-white px-2 py-1 rounded border border-slate-200 font-mono">
-                                                                                                                                        <?= htmlspecialchars($c['password_azure']) ?>
-                                                                                                                                    </code>
-                                                </div>
-                                            <?php endif; ?>
-                                            <?php if ($c['password_ag']): ?>
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs text-slate-500">Password AG:</span>
-                                                    <code class="text-xs bg-white px-2 py-1 rounded border border-slate-200 font-mono">
-                                                                                                                                        <?= htmlspecialchars($c['password_ag']) ?>
-                                                                                                                                    </code>
-                                                </div>
-                                            <?php endif; ?>
-                                            <?php if ($c['pin_windows']): ?>
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs text-slate-500">PIN Windows:</span>
-                                                    <code class="text-xs bg-white px-2 py-1 rounded border border-slate-200 font-mono">
-                                                                                                                                        <?= htmlspecialchars($c['pin_windows']) ?>
-                                                                                                                                    </code>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <!-- Contacto (solo si existe) -->
-                                    <?php if ($c['cuenta_gmail'] || $c['telefono_principal'] || $c['telefono_secundario']): ?>
-                                        <div class="bg-green-50 rounded-lg p-3 space-y-2">
-                                            <p class="text-xs font-bold text-green-700 uppercase flex items-center gap-1">
-                                                <i class="ri-smartphone-line"></i> Contacto
-                                            </p>
-                                            <?php if ($c['cuenta_gmail']): ?>
-                                                <div class="flex flex-col gap-1">
-                                                    <div class="flex items-center gap-2">
-                                                        <i class="ri-google-fill text-slate-400 text-xs"></i>
-                                                        <span class="text-xs text-slate-700">
-                                                            <?= htmlspecialchars($c['cuenta_gmail']) ?>
-                                                        </span>
+                                                                                                                                                        <?= htmlspecialchars($c['password_azure']) ?>
+                                                                                                                                                                    </code>
+                                                                </div>
+                                                        <?php endif; ?>
+                                                        <?php if ($c['password_ag']): ?>
+                                                                <div class="flex items-center justify-between">
+                                                                    <span class="text-xs text-slate-500">Password AG:</span>
+                                                                    <code class="text-xs bg-white px-2 py-1 rounded border border-slate-200 font-mono">
+                                                                                                                                                                        <?= htmlspecialchars($c['password_ag']) ?>
+                                                                                                                                                                    </code>
+                                                                </div>
+                                                        <?php endif; ?>
+                                                        <?php if ($c['pin_windows']): ?>
+                                                                <div class="flex items-center justify-between">
+                                                                    <span class="text-xs text-slate-500">PIN Windows:</span>
+                                                                    <code class="text-xs bg-white px-2 py-1 rounded border border-slate-200 font-mono">
+                                                                                                                                                                        <?= htmlspecialchars($c['pin_windows']) ?>
+                                                                                                                                                                    </code>
+                                                                </div>
+                                                        <?php endif; ?>
                                                     </div>
-                                                    <?php if ($c['password_gmail']): ?>
-                                                        <div class="flex items-center gap-2 ml-5">
-                                                            <i class="ri-key-2-line text-slate-400 text-[10px]"></i>
-                                                            <code
-                                                                class="text-[10px] bg-white px-1.5 py-0.5 rounded border border-green-200 font-mono text-slate-600">
-                                                                                                                                                                    <?= htmlspecialchars($c['password_gmail']) ?>
-                                                                                                                                                                </code>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
                                             <?php endif; ?>
-                                            <?php if ($c['telefono_principal']): ?>
-                                                <div class="flex items-center gap-2">
-                                                    <i class="ri-phone-line text-slate-400 text-xs"></i>
-                                                    <span class="text-xs text-slate-700">
-                                                        <?= htmlspecialchars($c['telefono_principal']) ?>
-                                                    </span>
-                                                </div>
+
+                                            <!-- Contacto (solo si existe) -->
+                                            <?php if ($c['cuenta_gmail'] || $c['telefono_principal'] || $c['telefono_secundario']): ?>
+                                                    <div class="bg-green-50 rounded-lg p-3 space-y-2">
+                                                        <p class="text-xs font-bold text-green-700 uppercase flex items-center gap-1">
+                                                            <i class="ri-smartphone-line"></i> Contacto
+                                                        </p>
+                                                        <?php if ($c['cuenta_gmail']): ?>
+                                                                <div class="flex flex-col gap-1">
+                                                                    <div class="flex items-center gap-2">
+                                                                        <i class="ri-google-fill text-slate-400 text-xs"></i>
+                                                                        <span class="text-xs text-slate-700">
+                                                                            <?= htmlspecialchars($c['cuenta_gmail']) ?>
+                                                                        </span>
+                                                                    </div>
+                                                                    <?php if ($c['password_gmail']): ?>
+                                                                            <div class="flex items-center gap-2 ml-5">
+                                                                                <i class="ri-key-2-line text-slate-400 text-[10px]"></i>
+                                                                                <code
+                                                                                    class="text-[10px] bg-white px-1.5 py-0.5 rounded border border-green-200 font-mono text-slate-600">
+                                                                                                                                                                                                            <?= htmlspecialchars($c['password_gmail']) ?>
+                                                                                                                                                                                                        </code>
+                                                                            </div>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                        <?php endif; ?>
+                                                        <?php if ($c['telefono_principal']): ?>
+                                                                <div class="flex items-center gap-2">
+                                                                    <i class="ri-phone-line text-slate-400 text-xs"></i>
+                                                                    <span class="text-xs text-slate-700">
+                                                                        <?= htmlspecialchars($c['telefono_principal']) ?>
+                                                                    </span>
+                                                                </div>
+                                                        <?php endif; ?>
+                                                        <?php if ($c['telefono_secundario']): ?>
+                                                                <div class="flex items-center gap-2">
+                                                                    <i class="ri-phone-line text-slate-400 text-xs"></i>
+                                                                    <span class="text-xs text-slate-500">
+                                                                        <?= htmlspecialchars($c['telefono_secundario']) ?>
+                                                                    </span>
+                                                                </div>
+                                                        <?php endif; ?>
+                                                    </div>
                                             <?php endif; ?>
-                                            <?php if ($c['telefono_secundario']): ?>
-                                                <div class="flex items-center gap-2">
-                                                    <i class="ri-phone-line text-slate-400 text-xs"></i>
-                                                    <span class="text-xs text-slate-500">
-                                                        <?= htmlspecialchars($c['telefono_secundario']) ?>
-                                                    </span>
-                                                </div>
+
+                                            <!-- Observaciones (si existen) -->
+                                            <?php if ($c['observaciones']): ?>
+                                                    <div class="text-xs text-slate-600 bg-amber-50 p-2 rounded border-l-2 border-amber-400">
+                                                        <i class="ri-information-line text-amber-600"></i>
+                                                        <?= htmlspecialchars($c['observaciones']) ?>
+                                                    </div>
                                             <?php endif; ?>
-                                        </div>
-                                    <?php endif; ?>
 
-                                    <!-- Observaciones (si existen) -->
-                                    <?php if ($c['observaciones']): ?>
-                                        <div class="text-xs text-slate-600 bg-amber-50 p-2 rounded border-l-2 border-amber-400">
-                                            <i class="ri-information-line text-amber-600"></i>
-                                            <?= htmlspecialchars($c['observaciones']) ?>
-                                        </div>
-                                    <?php endif; ?>
+                                            <!-- Fecha de asignación -->
+                                            <?php if ($c['fecha_asignacion']): ?>
+                                                    <div class="text-xs text-slate-500 flex items-center gap-1">
+                                                        <i class="ri-calendar-check-line"></i>
+                                                        Asignado:
+                                                        <?= date('d/m/Y', strtotime($c['fecha_asignacion'])) ?>
+                                                    </div>
+                                            <?php endif; ?>
 
-                                    <!-- Fecha de asignación -->
-                                    <?php if ($c['fecha_asignacion']): ?>
-                                        <div class="text-xs text-slate-500 flex items-center gap-1">
-                                            <i class="ri-calendar-check-line"></i>
-                                            Asignado:
-                                            <?= date('d/m/Y', strtotime($c['fecha_asignacion'])) ?>
+                                            <!-- Footer con acciones -->
+                                            <div class="pt-2 border-t border-slate-100 flex justify-end gap-2">
+                                                <button onclick='editarRegistro(<?= json_encode($c) ?>)' 
+                                                    class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-blue-600 hover:border-blue-600 transition-all text-sm font-medium flex items-center gap-1">
+                                                    <i class="ri-edit-line"></i> Editar
+                                                </button>
+                                                <form method="POST" action="index.php"
+                                                    onsubmit="return confirm('¿Eliminar esta cuenta?');" class="inline">
+                                                    <input type="hidden" name="accion" value="eliminar_registro_365">
+                                                    <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                                    <button type="submit"
+                                                        class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-red-600 hover:border-red-600 transition-all text-sm font-medium flex items-center gap-1">
+                                                        <i class="ri-delete-bin-line"></i> Eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
-                                    <?php endif; ?>
-
-                                    <!-- Footer con acciones -->
-                                    <div class="pt-2 border-t border-slate-100 flex justify-end gap-2">
-                                        <a href="index.php?view=registros_365_formulario&id=<?= $c['id'] ?>"
-                                            class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-blue-600 hover:border-blue-600 transition-all text-sm font-medium flex items-center gap-1">
-                                            <i class="ri-edit-line"></i> Editar
-                                        </a>
-                                        <form method="POST" action="index.php"
-                                            onsubmit="return confirm('¿Eliminar esta cuenta?');" class="inline">
-                                            <input type="hidden" name="accion" value="eliminar_registro_365">
-                                            <input type="hidden" name="id" value="<?= $c['id'] ?>">
-                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                            <button type="submit"
-                                                class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-red-600 hover:border-red-600 transition-all text-sm font-medium flex items-center gap-1">
-                                                <i class="ri-delete-bin-line"></i> Eliminar
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Botón Expansor -->
-                        <button onclick="toggleCard365(<?= $c['id'] ?>)"
-                            class="w-full py-2 bg-slate-50 hover:bg-slate-100 border-t border-slate-100 text-slate-400 hover:text-blue-500 transition-colors flex items-center justify-center group/btn cursor-pointer">
-                            <i id="icon-<?= $c['id'] ?>"
-                                class="ri-arrow-down-s-line text-xl transform transition-transform duration-300 group-hover/btn:translate-y-0.5"></i>
-                        </button>
-                    </div>
-                <?php endforeach; ?>
+                                <!-- Botón Expansor -->
+                                <button onclick="toggleCard365(<?= $c['id'] ?>)"
+                                    class="w-full py-2 bg-slate-50 hover:bg-slate-100 border-t border-slate-100 text-slate-400 hover:text-blue-500 transition-colors flex items-center justify-center group/btn cursor-pointer">
+                                    <i id="icon-<?= $c['id'] ?>"
+                                        class="ri-arrow-down-s-line text-xl transform transition-transform duration-300 group-hover/btn:translate-y-0.5"></i>
+                                </button>
+                            </div>
+                    <?php endforeach; ?>
             <?php endif; ?>
         </div>
 
-        <script>
-            function toggleCard365(id) {
-                const detalles = document.getElementById('detalles-' + id);
-                const icon = document.getElementById('icon-' + id);
-
-                if (detalles.classList.contains('hidden')) {
-                    // Mostrar
-                    detalles.classList.remove('hidden');
-                    icon.classList.add('rotate-180');
-                } else {
-                    // Ocultar
-                    detalles.classList.add('hidden');
-                    icon.classList.remove('rotate-180');
-                }
-            }
-        </script>
     </div>
 </div>
+
+<!-- Modal Edición Registro 365 -->
+<div id="modal-editar-365" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="cerrarModalEditar()"></div>
+    
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                
+                <!-- Header Modal -->
+                <div class="bg-slate-50 px-4 py-3 sm:px-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold leading-6 text-slate-800" id="modal-title">
+                        <i class="ri-edit-line text-blue-600 mr-2"></i> Editar Cuenta 365
+                    </h3>
+                    <button type="button" onclick="cerrarModalEditar()" class="text-slate-400 hover:text-red-500 transition-colors">
+                        <i class="ri-close-line text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Formulario -->
+                <form action="index.php" method="POST" id="form-editar-365">
+                    <input type="hidden" name="accion" value="editar_registro_365">
+                    <!-- Redireccionar de vuelta a esta vista (registros_365) -->
+                    <input type="hidden" name="redirect_view" value="registros_365"> 
+                    <input type="hidden" name="id" id="edit_id">
+                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+
+
+                    <div class="px-4 py-5 sm:p-6 space-y-4">
+                        
+                        <!-- Email y Licencia -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email <span class="text-red-500">*</span></label>
+                                <input type="email" name="email" id="edit_email" required
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Licencia</label>
+                                <select name="licencia" id="edit_licencia"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm">
+                                    <option value="Business Basic">Business Basic</option>
+                                    <option value="Business Standard">Business Standard</option>
+                                    <option value="Business Premium">Business Premium</option>
+                                    <option value="E3">E3</option>
+                                    <option value="E5">E5</option>
+                                    <option value="Exchange Online">Exchange Online</option>
+                                </select>
+                            </div>
+                        </div>
+
+                         <!-- Empresa y Sucursal -->
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Empresa</label>
+                                <select name="empresa_id" id="edit_empresa_id"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm">
+                                    <option value="">-- Seleccionar --</option>
+                                    <?php foreach ($empresas as $id => $nombre): ?>
+                                            <option value="<?= $id ?>"><?= htmlspecialchars($nombre) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                             <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sucursal</label>
+                                <select name="sucursal_id" id="edit_sucursal_id"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm">
+                                    <option value="">-- Seleccionar --</option>
+                                    <!-- Se llenará via JS opcionaaalmente o mostrar todas -->
+                                     <?php foreach ($sucursales as $id => $nombre): ?>
+                                            <option value="<?= $id ?>"><?= htmlspecialchars($nombre) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                         </div>
+
+                        <!-- Credenciales -->
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                             <h4 class="text-xs font-bold text-slate-700 mb-2 border-b border-slate-200 pb-1">Credenciales</h4>
+                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Password AG</label>
+                                    <input type="text" name="password_ag" id="edit_password_ag"
+                                        class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Password Azure</label>
+                                    <input type="text" name="password_azure" id="edit_password_azure"
+                                        class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm font-mono">
+                                </div>
+                                 <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">PIN Windows</label>
+                                    <input type="text" name="pin_windows" id="edit_pin_windows"
+                                        class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm font-mono">
+                                </div>
+                             </div>
+                        </div>
+                        
+                         <!-- Contacto -->
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                             <h4 class="text-xs font-bold text-slate-700 mb-2 border-b border-slate-200 pb-1">Contacto</h4>
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Teléfono Principal</label>
+                                    <input type="text" name="telefono_principal" id="edit_telefono_principal"
+                                        class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm">
+                                </div>
+                                 <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cuenta Gmail</label>
+                                    <input type="text" name="cuenta_gmail" id="edit_cuenta_gmail"
+                                        class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm">
+                                </div>
+                             </div>
+                        </div>
+
+                         <!-- Estado y Observaciones -->
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="col-span-1">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
+                                <select name="estado" id="edit_estado"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                    <option value="Suspendido">Suspendido</option>
+                                </select>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Observaciones</label>
+                                <input type="text" name="observaciones" id="edit_observaciones"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-slate-100">
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                            Guardar Cambios
+                        </button>
+                        <button type="button" onclick="cerrarModalEditar()"
+                            class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function editarRegistro(data) {
+        document.getElementById('edit_id').value = data.id;
+        document.getElementById('edit_email').value = data.email || '';
+        document.getElementById('edit_licencia').value = data.licencia || 'Business Basic';
+        document.getElementById('edit_empresa_id').value = data.empresa_id || '';
+        document.getElementById('edit_sucursal_id').value = data.sucursal_id || ''; 
+        
+        document.getElementById('edit_password_ag').value = data.password_ag || '';
+        document.getElementById('edit_password_azure').value = data.password_azure || '';
+        document.getElementById('edit_pin_windows').value = data.pin_windows || '';
+        
+        document.getElementById('edit_telefono_principal').value = data.telefono_principal || '';
+        document.getElementById('edit_cuenta_gmail').value = data.cuenta_gmail || '';
+        
+        document.getElementById('edit_estado').value = data.estado || 'Activo';
+        document.getElementById('edit_observaciones').value = data.observaciones || '';
+
+        document.getElementById('modal-editar-365').classList.remove('hidden');
+    }
+
+    function cerrarModalEditar() {
+        document.getElementById('modal-editar-365').classList.add('hidden');
+    }
+
+    function toggleCard365(id) {
+        const detalles = document.getElementById('detalles-' + id);
+        const icon = document.getElementById('icon-' + id);
+
+        if (detalles.classList.contains('hidden')) {
+            // Mostrar
+            detalles.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+        } else {
+            // Ocultar
+            detalles.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+        }
+    }
+</script>
