@@ -32,9 +32,11 @@
                     <li>El archivo debe tener formato <strong>.CSV</strong> (delimitado por comas o punto y coma).</li>
                     <li>La primera fila debe contener los encabezados exactos (o seguir el orden).</li>
                     <li>Las columnas requeridas son: <code
-                            class="bg-blue-100 px-1 rounded font-bold">Tipo, Marca, Modelo, Serial, SKU, Estado, Condición</code>.
+                            class="bg-blue-100 px-1 rounded font-bold">Tipo, Marca, Modelo, Serial, SKU, Estado, Condición, Comentarios, Sucursal</code>.
                     </li>
                     <li>El <strong>Serial</strong> y <strong>SKU</strong> deben ser únicos en el sistema.</li>
+                    <li>El campo <strong>Sucursal</strong> debe coincidir exactamente con el nombre en el sistema (ver
+                        plantilla).</li>
                 </ul>
             </div>
             <div class="flex-none">

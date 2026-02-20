@@ -2006,8 +2006,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             continue; // Saltar cabecera
 
                         // Mapeo básico por índice, asumiendo orden del template:
-                        // 0: Tipo, 1: Marca, 2: Modelo, 3: Serial, 4: SKU, 5: Estado, 6: Condicion
-                        // Verificar que tenga al menos columnas criticas (hasta serial)
+                        // 0:Tipo, 1:Marca, 2:Modelo, 3:Serial, 4:SKU, 5:Estado, 6:Condición, 7:Comentarios, 8:Sucursal
                         if (count($data) < 4) {
                             $errors++;
                             continue;
@@ -2018,9 +2017,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $marca = trim($data[1] ?? '');
                             $modelo = trim($data[2] ?? '');
                             $serial = trim($data[3] ?? '');
-                            $sku = trim($data[4] ?? ''); // Opcional
+                            $sku = trim($data[4] ?? '');
                             $estado = trim($data[5] ?? 'Bueno');
                             $condicion = trim($data[6] ?? 'Disponible');
+                            $comentarios = trim($data[7] ?? '');
+                            $sucursal_nombre = trim($data[8] ?? '');
+
+                            // Resolver sucursal_id a partir del nombre
+                            $sucursal_id_import = null;
+                            if (!empty($sucursal_nombre)) {
+                                $stmt_s = $pdo->prepare("SELECT id FROM sucursales WHERE nombre = ? LIMIT 1");
+                                $stmt_s->execute([$sucursal_nombre]);
+                                $sucursal_id_import = $stmt_s->fetchColumn() ?: null;
+                            }
 
                             if (empty($tipo) || empty($marca) || empty($modelo) || empty($serial)) {
                                 throw new Exception("Datos incompletos en fila $row");
@@ -2039,9 +2048,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($stmt->fetch())
                                 throw new Exception("Serial $serial duplicado");
 
-                            $sql = "INSERT INTO inventario (tipo, marca, modelo, serial, sku, estado, condicion) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                            $sql = "INSERT INTO inventario (tipo, marca, modelo, serial, sku, estado, condicion, comentarios, sucursal_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                             $stmt = $pdo->prepare($sql);
-                            $stmt->execute([$tipo, $marca, $modelo, $serial, !empty($sku) ? $sku : null, $estado, $condicion]);
+                            $stmt->execute([
+                                $tipo,
+                                $marca,
+                                $modelo,
+                                $serial,
+                                !empty($sku) ? $sku : null,
+                                $estado,
+                                $condicion,
+                                !empty($comentarios) ? $comentarios : null,
+                                $sucursal_id_import
+                            ]);
                             $success++;
                         } catch (Exception $e) {
                             $errors++;
