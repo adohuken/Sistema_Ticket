@@ -2,8 +2,20 @@
 /**
  * seccion_registro_equipo.php - Formulario de Registro de Activos (Premium UI)
  */
-// Cargar lista de sucursales para el selector
-$sucursales_lista = $pdo->query("SELECT id, nombre FROM sucursales ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
+// Cargar sucursales: solo las del usuario (salvo SuperAdmin)
+if (isset($rol_usuario) && $rol_usuario === 'SuperAdmin') {
+    $sucursales_lista = $pdo->query("SELECT id, nombre FROM sucursales ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $stmt_suc = $pdo->prepare("
+        SELECT s.id, s.nombre
+        FROM sucursales s
+        INNER JOIN usuarios_accesos ua ON ua.sucursal_id = s.id
+        WHERE ua.usuario_id = ?
+        ORDER BY s.nombre
+    ");
+    $stmt_suc->execute([$usuario_id]);
+    $sucursales_lista = $stmt_suc->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
