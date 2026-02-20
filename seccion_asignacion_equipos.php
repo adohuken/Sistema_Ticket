@@ -18,21 +18,7 @@ $stmt_empleados = $pdo->prepare("
 $stmt_empleados->execute();
 $empleados_lista = $stmt_empleados->fetchAll(PDO::FETCH_ASSOC);
 
-// Lista de equipos disponibles (para la pestaña de asignación)
-// Lista de equipos disponibles (para la pestaña de asignación)
-$stmt_equipos = $pdo->query("SELECT * FROM inventario ORDER BY tipo, marca");
-$todos_equipos = $stmt_equipos->fetchAll(PDO::FETCH_ASSOC);
-
-// Agrupar equipos disponibles para UI
-$equipos_disponibles_grouped = [];
-$count_disponibles = 0;
-foreach ($todos_equipos as $eq) {
-    if ($eq['condicion'] === 'Disponible') {
-        $equipos_disponibles_grouped[$eq['tipo']][] = $eq;
-        $count_disponibles++;
-    }
-}
-ksort($equipos_disponibles_grouped);
+// INFO: El inventario se carga dinámicamente por AJAX al seleccionar un empleado
 ?>
 
 <!-- CONTAINER PRINCIPAL (Altura fija para layout de aplicación) -->
@@ -200,38 +186,28 @@ ksort($equipos_disponibles_grouped);
                                 class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">
                         </div>
 
-                        <!-- Inventory Grid -->
-                        <div class="space-y-6" id="inventory-container">
-                            <?php foreach ($equipos_disponibles_grouped as $tipo => $list): ?>
-                                <div class="inventory-group" data-type="<?= strtolower($tipo) ?>">
-                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">
-                                        <?= $tipo ?>
-                                    </h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        <?php foreach ($list as $eq): ?>
-                                            <!-- Asset Card -->
-                                            <div class="asset-card relative bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all select-none"
-                                                data-id="<?= $eq['id'] ?>"
-                                                data-search="<?= strtolower($eq['tipo'] . ' ' . $eq['marca'] . ' ' . $eq['modelo'] . ' ' . $eq['serial']) ?>">
-
-                                                <!-- Checkbox UI (Fake) -->
-                                                <div
-                                                    class="absolute top-3 right-3 w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center check-indicator transition-colors bg-white">
-                                                    <i class="ri-check-line text-white text-xs opacity-0"></i>
-                                                </div>
-
-                                                <div class="pr-6">
-                                                    <p class="text-xs text-blue-600 font-semibold mb-1"><?= $eq['marca'] ?></p>
-                                                    <h5 class="text-sm font-bold text-slate-700 truncate"
-                                                        title="<?= $eq['modelo'] ?>"><?= $eq['modelo'] ?></h5>
-                                                    <p class="text-xs font-mono text-slate-400 mt-1"><?= $eq['serial'] ?></p>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
+                        <!-- Empty state: no employee selected -->
+                        <div id="inv-no-employee" class="py-12 text-center">
+                            <i class="ri-user-search-line text-4xl text-slate-300 block mb-3"></i>
+                            <p class="text-slate-400 text-sm">Selecciona un colaborador para ver los equipos disponibles
+                                en su sucursal.</p>
                         </div>
+
+                        <!-- Loading state -->
+                        <div id="inv-loading" class="hidden py-12 text-center">
+                            <i class="ri-loader-4-line animate-spin text-3xl text-blue-400 block mb-3"></i>
+                            <p class="text-slate-400 text-sm">Cargando equipos de la sucursal...</p>
+                        </div>
+
+                        <!-- Empty: no equipment in branch -->
+                        <div id="inv-empty" class="hidden py-12 text-center">
+                            <i class="ri-inbox-line text-4xl text-slate-300 block mb-3"></i>
+                            <p class="text-slate-400 text-sm">No hay equipos disponibles en la sucursal de este
+                                colaborador.</p>
+                        </div>
+
+                        <!-- Inventory Grid (dynamic) -->
+                        <div class="space-y-6" id="inventory-container"></div>
                     </div>
                 </div>
             </div>
@@ -334,6 +310,9 @@ ksort($equipos_disponibles_grouped);
 
             // Fetch Current Assets
             this.fetchAssignedAssets(data.id);
+
+            // Fetch inventory filtered by employee's sucursal
+            this.fetchInventarioBySucursal(data.sucursal_id);
         },
 
         fetchAssignedAssets(empId) {
@@ -355,6 +334,98 @@ ksort($equipos_disponibles_grouped);
                     console.error(err);
                     tbody.innerHTML = '<tr><td colspan="4" class="text-red-500 p-4">Error de conexión</td></tr>';
                 });
+        },
+
+        fetchInventarioBySucursal(sucursalId) {
+            const container = document.getElementById('inventory-container');
+            const noEmp = document.getElementById('inv-no-employee');
+            const loading = document.getElementById('inv-loading');
+            const empty = document.getElementById('inv-empty');
+
+            noEmp.classList.add('hidden');
+            empty.classList.add('hidden');
+            container.innerHTML = '';
+
+            if (!sucursalId) {
+                loading.classList.add('hidden');
+                const p = empty.querySelector('p');
+                if (p) p.textContent = 'Este colaborador no tiene sucursal asignada.';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            loading.classList.remove('hidden');
+
+            fetch(`index.php?view=asignacion_equipos&ajax_action=get_inventario_sucursal&sucursal_id=${sucursalId}`)
+                .then(r => r.json())
+                .then(res => {
+                    loading.classList.add('hidden');
+                    if (res.status === 'success') {
+                        this.renderInventory(res.equipos);
+                    } else {
+                        const p = empty.querySelector('p');
+                        if (p) p.textContent = 'Error al cargar inventario.';
+                        empty.classList.remove('hidden');
+                    }
+                })
+                .catch(() => {
+                    loading.classList.add('hidden');
+                    const p = empty.querySelector('p');
+                    if (p) p.textContent = 'Error de red al cargar inventario.';
+                    empty.classList.remove('hidden');
+                });
+        },
+
+        renderInventory(equipos) {
+            const container = document.getElementById('inventory-container');
+            const empty = document.getElementById('inv-empty');
+            container.innerHTML = '';
+
+            if (!equipos || equipos.length === 0) {
+                const p = empty.querySelector('p');
+                if (p) p.textContent = 'No hay equipos disponibles en la sucursal de este colaborador.';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            // Agrupar por tipo
+            const grouped = {};
+            equipos.forEach(eq => {
+                if (!grouped[eq.tipo]) grouped[eq.tipo] = [];
+                grouped[eq.tipo].push(eq);
+            });
+
+            Object.keys(grouped).sort().forEach(tipo => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'inventory-group';
+                groupDiv.dataset.type = tipo.toLowerCase();
+
+                const cardsHTML = grouped[tipo].map(eq => `
+                    <div class="asset-card relative bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all select-none"
+                        data-id="${eq.id}"
+                        data-search="${(eq.tipo + ' ' + eq.marca + ' ' + eq.modelo + ' ' + eq.serial).toLowerCase()}">
+                        <div class="absolute top-3 right-3 w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center check-indicator transition-colors bg-white">
+                            <i class="ri-check-line text-white text-xs opacity-0"></i>
+                        </div>
+                        <div class="pr-6">
+                            <p class="text-xs text-blue-600 font-semibold mb-1">${eq.marca}</p>
+                            <h5 class="text-sm font-bold text-slate-700 truncate" title="${eq.modelo}">${eq.modelo}</h5>
+                            <p class="text-xs font-mono text-slate-400 mt-1">${eq.serial}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+                groupDiv.innerHTML = `
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">${tipo}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${cardsHTML}</div>
+                `;
+                container.appendChild(groupDiv);
+            });
+
+            // Re-vincular eventos click a las nuevas tarjetas
+            container.querySelectorAll('.asset-card').forEach(card => {
+                card.addEventListener('click', () => this.toggleAssetSelection(card));
+            });
         },
 
         renderAssignedTable(assets) {

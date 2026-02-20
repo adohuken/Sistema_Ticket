@@ -2,6 +2,8 @@
 /**
  * seccion_registro_equipo.php - Formulario de Registro de Activos (Premium UI)
  */
+// Cargar lista de sucursales para el selector
+$sucursales_lista = $pdo->query("SELECT id, nombre FROM sucursales ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -149,7 +151,33 @@
                 </div>
         </div>
 
-        <!-- Sección 3: Informacion Adicional -->
+        <!-- Sección 3: Sucursal de Destino -->
+        <div class="mb-8 pt-6 border-t border-slate-100">
+            <h3 class="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">
+                <i class="ri-building-2-line text-lg"></i> Sucursal Destino
+            </h3>
+            <div class="relative group">
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">SUCURSAL <span
+                        class="text-slate-300 font-normal">(Opcional)</span></label>
+                <div class="relative">
+                    <i
+                        class="ri-map-pin-line absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                    <select name="sucursal_id"
+                        class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none">
+                        <option value="">-- Sin sucursal asignada --</option>
+                        <?php foreach ($sucursales_lista as $suc): ?>
+                            <option value="<?= $suc['id'] ?>"><?= htmlspecialchars($suc['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <i
+                        class="ri-arrow-down-s-line absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 ml-1">Asocia este equipo a una sucursal para filtrar
+                    correctamente en las asignaciones.</p>
+            </div>
+        </div>
+
+        <!-- Sección 4: Informacion Adicional -->
         <div class="mb-8 pt-6 border-t border-slate-100">
             <h3 class="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">
                 <i class="ri-file-text-line text-lg"></i> Información Adicional

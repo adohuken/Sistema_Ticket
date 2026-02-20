@@ -359,6 +359,21 @@ if (isset($_GET['ajax_action']) && isset($_GET['view']) && $_GET['view'] === 'as
         echo json_encode(['status' => 'success', 'activos' => $activos]);
         exit;
     }
+
+    // Handler: Equipos disponibles de una sucursal (para modulo asignacion)
+    if ($_GET['ajax_action'] === 'get_inventario_sucursal' && isset($_GET['sucursal_id'])) {
+        $sucursal_id = (int) $_GET['sucursal_id'];
+        $stmt_inv = $pdo->prepare("
+            SELECT id, tipo, marca, modelo, serial, sku, condicion, estado
+            FROM inventario
+            WHERE sucursal_id = ? AND condicion = 'Disponible'
+            ORDER BY tipo, marca
+        ");
+        $stmt_inv->execute([$sucursal_id]);
+        $equipos = $stmt_inv->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['status' => 'success', 'equipos' => $equipos]);
+        exit;
+    }
 }
 
 // Handler AJAX Specífico para Reporte Mantenimiento (Guardar Specs)
@@ -1872,9 +1887,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("El Serial '$serial' ya está registrado en el sistema.");
                 }
 
-                $sql = "INSERT INTO inventario (tipo, marca, modelo, serial, sku, estado, condicion) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                $sucursal_inv = !empty($_POST['sucursal_id']) ? (int) $_POST['sucursal_id'] : null;
+
+                $sql = "INSERT INTO inventario (tipo, marca, modelo, serial, sku, estado, condicion, sucursal_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$tipo, $marca, $modelo, $serial, !empty($sku) ? $sku : null, $estado, $condicion]);
+                $stmt->execute([$tipo, $marca, $modelo, $serial, !empty($sku) ? $sku : null, $estado, $condicion, $sucursal_inv]);
 
                 // Guardar éxito en sesión para mostrarlo tras redirección
                 $_SESSION['mensaje_exito'] = "✅ Activo registrado correctamente: $tipo $marca $modelo";
@@ -1944,9 +1961,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("El Serial '$serial' ya está asignado a otro equipo.");
                 }
 
-                $sql = "UPDATE inventario SET tipo = ?, marca = ?, modelo = ?, serial = ?, sku = ?, estado = ?, procesador = ?, ram = ?, disco_duro = ?, sistema_operativo = ?, ip_address = ?, mac_address = ?, anydesk_id = ? WHERE id = ?";
+                $sucursal_inv_upd = !empty($_POST['sucursal_id']) ? (int) $_POST['sucursal_id'] : null;
+
+                $sql = "UPDATE inventario SET tipo = ?, marca = ?, modelo = ?, serial = ?, sku = ?, estado = ?, procesador = ?, ram = ?, disco_duro = ?, sistema_operativo = ?, ip_address = ?, mac_address = ?, anydesk_id = ?, sucursal_id = ? WHERE id = ?";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$tipo, $marca, $modelo, $serial, !empty($sku) ? $sku : null, $estado, $procesador, $ram, $disco_duro, $sistema_operativo, $ip_address, $mac_address, $anydesk_id, $id]);
+                $stmt->execute([$tipo, $marca, $modelo, $serial, !empty($sku) ? $sku : null, $estado, $procesador, $ram, $disco_duro, $sistema_operativo, $ip_address, $mac_address, $anydesk_id, $sucursal_inv_upd, $id]);
 
                 $_SESSION['mensaje_exito'] = "✅ Activo actualizado correctamente.";
                 header("Location: index.php?view=inventario");
