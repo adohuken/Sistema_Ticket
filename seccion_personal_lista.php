@@ -33,17 +33,18 @@ if (!$es_superadmin && $usuario_id) {
         $stmt_perms->execute([$usuario_id]);
         $usuario_sucursales_permitidas = $stmt_perms->fetchAll(PDO::FETCH_COLUMN);
 
-        // 2. Empresa Asignada (String) - REFRESCAR AL INSTANTE
-        $stmt_emp = $pdo->prepare("SELECT empresa_asignada FROM usuarios WHERE id = ?");
+        // 2. Empresa Asignada — usar empresa_id (columna FK correcta)
+        $stmt_emp = $pdo->prepare("SELECT empresa_id FROM usuarios WHERE id = ?");
         $stmt_emp->execute([$usuario_id]);
-        $usuario_empresa_asignada_str = $stmt_emp->fetchColumn();
+        $usuario_empresa_id_db = $stmt_emp->fetchColumn();
 
     } catch (Exception $e) {
         $usuario_sucursales_permitidas = $_SESSION['usuario_sucursales_permitidas'] ?? [];
-        $usuario_empresa_asignada_str = ''; // Fallback
+        $usuario_empresa_id_db = null;
     }
 } else {
     $usuario_sucursales_permitidas = $_SESSION['usuario_sucursales_permitidas'] ?? [];
+    $usuario_empresa_id_db = null;
 }
 // FILTERING OPTIONS (Dropdowns)
 if (!$es_superadmin && !empty($usuario_sucursales_permitidas)) {
@@ -178,43 +179,37 @@ $total_personal = array_sum($stats_data);
             <?php
             // LÓGICA DE LOGO DINÁMICO
             $logo_url = '';
-            $logo_key = '';
 
-            // 1. Determinar Empresa ID o Key para logo
-            $empresa_id_logo = $usuario_empresa_id; // Default Int (Session Legacy)
-            $empresa_str_logo = $usuario_empresa_asignada_str; // Default String (Fresh DB)
-            
-            // Si hay filtro activo y el usuario tiene permiso de ver varias empresas, usar el filtro
+            // 1. Determinar qué empresa mostrar
+            //    Prioridad: filtro activo → empresa_id de la DB (RRHH) → sesión legacy
+            $empresa_id_logo = null;
+
             if (($es_superadmin || !empty($usuario_sucursales_permitidas)) && $filtro_empresa !== 'todos' && $filtro_empresa != -1) {
-                // El filtro es INT (ID)
-                $empresa_id_logo = $filtro_empresa;
-                $empresa_str_logo = ''; // Anulamos string para usar filtro ID
+                // Filtro activo en la UI
+                $empresa_id_logo = (int) $filtro_empresa;
+            } elseif (!empty($usuario_empresa_id_db)) {
+                // Empresa asignada al usuario RRHH (empresa_id FK)
+                $empresa_id_logo = (int) $usuario_empresa_id_db;
+            } elseif (!empty($usuario_empresa_id)) {
+                // Fallback: sesión legacy
+                $empresa_id_logo = (int) $usuario_empresa_id;
             }
 
-            // 2. Mapear a Config Key
-            if ($empresa_str_logo) {
-                // Prioridad 1: String directo de DB (mastertec, suministros, centro)
-                switch(strtolower($empresa_str_logo)) {
-                    case 'mastertec': $logo_key = 'logo_mastertec'; break;
-                    case 'suministros': $logo_key = 'logo_master_suministros'; break;
-                    case 'centro': $logo_key = 'logo_centro'; break;
-                }
-            } elseif ($empresa_id_logo) {
-                // Prioridad 2: ID (Filtros o Session Legacy)
-                switch($empresa_id_logo) {
-                    case 1: $logo_key = 'logo_mastertec'; break;
-                    case 3: $logo_key = 'logo_master_suministros'; break;
-                    case 4: $logo_key = 'logo_centro'; break;
-                }
-            }
-
-            // 3. Fetch URL
-            if ($logo_key) {
+            // 2. Obtener logo_key desde la tabla empresas y luego la URL desde configuracion_sistema
+            if ($empresa_id_logo) {
                 try {
-                    $stmt_logo = $pdo->prepare("SELECT valor FROM configuracion_sistema WHERE clave = ?");
-                    $stmt_logo->execute([$logo_key]);
-                    $logo_url = $stmt_logo->fetchColumn();
-                } catch(Exception $e) {}
+                    $stmt_lk = $pdo->prepare("SELECT logo_key FROM empresas WHERE id = ?");
+                    $stmt_lk->execute([$empresa_id_logo]);
+                    $logo_key = $stmt_lk->fetchColumn();
+
+                    if ($logo_key) {
+                        $stmt_logo = $pdo->prepare("SELECT valor FROM configuracion_sistema WHERE clave = ?");
+                        $stmt_logo->execute([$logo_key]);
+                        $logo_url = $stmt_logo->fetchColumn() ?: '';
+                    }
+                } catch (Exception $e) {
+                    $logo_url = '';
+                }
             }
             ?>
             <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
