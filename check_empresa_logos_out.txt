@@ -35,7 +35,7 @@
 === USUARIOS empresa_asignada ===
   [1] SuperAdmin | empresa_asignada='' | empresa_id=
   [3] JuanTest | empresa_asignada='' | empresa_id=
-  [5] RRHH | empresa_asignada='centro' | empresa_id=
+  [5] RRHH | empresa_asignada='mastertec' | empresa_id=4
   [7] PedroTest | empresa_asignada='' | empresa_id=1
   [8] David Abarca | empresa_asignada='' | empresa_id=
   [9] Test Tecnico | empresa_asignada='' | empresa_id=

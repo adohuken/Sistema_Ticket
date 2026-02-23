@@ -24,7 +24,7 @@ $mapa_enlaces = [
 
     // Gestión IT
     'registros_365' => ['href' => 'index.php?view=registros_365', 'label' => 'Cuentas 365', 'icon' => 'ri-microsoft-line', 'grupo' => 'Gestión IT'],
-    'mantenimiento_equipos' => ['href' => 'index.php?view=mantenimiento_equipos', 'label' => 'Mantenimiento', 'icon' => 'ri-tools-line', 'grupo' => 'Gestión IT'],
+    'mantenimiento_equipos' => ['href' => 'index.php?view=mantenimiento_equipos', 'label' => 'Servicios IT', 'icon' => 'ri-settings-5-line', 'grupo' => 'Gestión IT'],
     'visualizacion_it' => ['href' => 'index.php?view=visualizacion_it', 'label' => 'Info IT', 'icon' => 'ri-information-line', 'grupo' => 'Gestión IT'],
 
     // RRHH
@@ -266,7 +266,7 @@ foreach ($enlaces_visibles as $enlace) {
 <?php
 // Contenedor principal con margen izquierdo ajustado (w-72 = 18rem = ml-72)
 ?>
-<div class="ml-72 bg-slate-50/50 transition-all duration-300 relative z-0">
+<div class="ml-72 bg-slate-50/50 transition-all duration-300">
     <!-- Espaciador para el header fijo -->
     <div class="pt-24 px-0 pb-0 w-full">
         <main class="w-full max-w-full mx-0 text-left block">
