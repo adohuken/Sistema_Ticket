@@ -733,8 +733,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                $mensaje_accion = "<div class='bg-green-100 text-green-800 p-4 rounded mb-4'>Usuario actualizado exitosamente.</div>";
                 registrar_actividad("Actualizar Usuario", "Usuario ID: " . $user_id_edit, $pdo);
+                header("Location: index.php?view=usuarios&success=usuario_actualizado");
+                exit;
             } catch (PDOException $e) {
                 $mensaje_accion = "<div class='bg-red-100 text-red-800 p-4 rounded mb-4'>Error al actualizar usuario: " . $e->getMessage() . "</div>";
             }
