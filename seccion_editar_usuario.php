@@ -116,11 +116,11 @@ if (!$usuario_editar) {
                             RRHH:</p>
                         <div class="relative">
                             <i class="ri-building-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                            <select name="empresa_id"
+                            <select name="empresa_asignada"
                                 class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all bg-slate-50 focus:bg-white appearance-none cursor-pointer">
-                                <option value="">-- Seleccionar Empresa --</option>
+                                <option value="">-- Sin asignar --</option>
                                 <?php foreach ($empresas_form as $e): ?>
-                                    <option value="<?= $e['id'] ?>" <?= ($usuario_editar['empresa_id'] == $e['id']) ? 'selected' : '' ?>>
+                                    <option value="<?= $e['id'] ?>" <?= ($usuario_editar['empresa_asignada'] == $e['id']) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($e['nombre']) ?>
                                     </option>
                                 <?php endforeach; ?>
