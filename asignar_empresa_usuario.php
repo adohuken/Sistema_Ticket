@@ -13,12 +13,12 @@ if (empty($_SESSION['csrf_token'])) {
     generar_csrf_token();
 }
 
-$mensaje  = '';
+$mensaje = '';
 $tipo_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $token_post    = $_POST['csrf_token']    ?? '';
+        $token_post = $_POST['csrf_token'] ?? '';
         $token_session = $_SESSION['csrf_token'] ?? '';
 
         if (empty($token_post) || $token_post !== $token_session) {
@@ -32,24 +32,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Selecciona un usuario válido.");
         }
 
-        $stmt = $pdo->prepare("UPDATE usuarios SET empresa_asignada = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE usuarios SET empresa_id = ? WHERE id = ?");
         $stmt->execute([$empresa_id, $usuario_id]);
 
         $tipo_msg = 'success';
-        $mensaje  = '✅ Empresa asignada correctamente al usuario.';
+        $mensaje = '✅ Empresa asignada correctamente al usuario.';
 
     } catch (Exception $e) {
         $tipo_msg = 'error';
-        $mensaje  = '❌ Error: ' . $e->getMessage();
+        $mensaje = '❌ Error: ' . $e->getMessage();
     }
 }
 
 // Obtener usuarios RRHH con su empresa actual
 $stmt_rrhh = $pdo->query("
-    SELECT u.id, u.nombre_completo, u.email, u.empresa_asignada, e.nombre AS empresa_nombre
+    SELECT u.id, u.nombre_completo, u.email, u.empresa_id, e.nombre AS empresa_nombre
     FROM usuarios u
     LEFT JOIN roles r ON u.rol_id = r.id
-    LEFT JOIN empresas e ON u.empresa_asignada = e.id
+    LEFT JOIN empresas e ON u.empresa_id = e.id
     WHERE r.nombre = 'RRHH'
     ORDER BY u.nombre_completo
 ");
@@ -64,19 +64,21 @@ $usuario_preseleccionado = isset($_GET['usuario_id']) ? (int) $_GET['usuario_id'
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asignar Empresa a Usuario RRHH</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-slate-100 p-8">
     <div class="max-w-2xl mx-auto bg-white rounded-2xl p-8 shadow-lg">
         <h1 class="text-2xl font-bold text-slate-800 mb-6">🏢 Asignar Empresa a Usuario RRHH</h1>
 
         <?php if ($mensaje):
             $color = $tipo_msg === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-        ?>
+            ?>
             <div class="<?= $color ?> p-4 rounded-lg mb-6"><?= htmlspecialchars($mensaje) ?></div>
         <?php endif; ?>
 
@@ -92,7 +94,8 @@ $usuario_preseleccionado = isset($_GET['usuario_id']) ? (int) $_GET['usuario_id'
                     <?php foreach ($usuarios_rrhh as $u): ?>
                         <option value="<?= $u['id'] ?>" <?= ($usuario_preseleccionado == $u['id']) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($u['nombre_completo']) ?> (<?= htmlspecialchars($u['email']) ?>)
-                            <?php if ($u['empresa_nombre']): ?> — Actual: <?= htmlspecialchars($u['empresa_nombre']) ?><?php endif; ?>
+                            <?php if ($u['empresa_nombre']): ?> — Actual:
+                                <?= htmlspecialchars($u['empresa_nombre']) ?>    <?php endif; ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -149,4 +152,5 @@ $usuario_preseleccionado = isset($_GET['usuario_id']) ? (int) $_GET['usuario_id'
         </div>
     </div>
 </body>
+
 </html>

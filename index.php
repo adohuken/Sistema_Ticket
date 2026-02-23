@@ -667,29 +667,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $user_id_edit = $_POST['usuario_id'];
 
-                // Actualizar datos básicos
-                $empresa_asignada_edit = !empty($_POST['empresa_asignada']) ? $_POST['empresa_asignada'] : null;
+                // Leer empresa_id (columna FK correcta)
+                $empresa_id_edit = !empty($_POST['empresa_id']) ? (int) $_POST['empresa_id'] : null;
 
                 if (!empty($_POST['password'])) {
-                    // Si se proporcionó nueva contraseña
+                    // Con cambio de contraseña
                     $password_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, password = ?, rol_id = ?, empresa_asignada = ? WHERE id = ?");
+                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, password = ?, rol_id = ?, empresa_id = ? WHERE id = ?");
                     $stmt->execute([
                         $_POST['nombre_usuario'],
                         $_POST['email'],
                         $password_hash,
                         $_POST['rol'],
-                        $empresa_asignada_edit,
+                        $empresa_id_edit,
                         $user_id_edit
                     ]);
                 } else {
                     // Sin cambio de contraseña
-                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, rol_id = ?, empresa_asignada = ? WHERE id = ?");
+                    $stmt = $pdo->prepare("UPDATE usuarios SET nombre_completo = ?, email = ?, rol_id = ?, empresa_id = ? WHERE id = ?");
                     $stmt->execute([
                         $_POST['nombre_usuario'],
                         $_POST['email'],
                         $_POST['rol'],
-                        $empresa_asignada_edit,
+                        $empresa_id_edit,
                         $user_id_edit
                     ]);
                 }
