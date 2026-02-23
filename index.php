@@ -241,28 +241,35 @@ if (isset($_REQUEST['ajax_action']) && isset($_GET['view']) && $_GET['view'] ===
 
             // [NEW] Asset Creation
             if ($action === 'ajax_crear_activo') {
-                $tipo = $_POST['tipo'];
-                $marca = $_POST['marca'];
-                $modelo = $_POST['modelo'];
-                $serial = $_POST['serial'];
-                $estado = $_POST['estado'];
-                $sku = $_POST['sku'] ?? '';
-                $comentarios = $_POST['comentarios'] ?? null; // [NEW]
+                $tipo = trim($_POST['tipo'] ?? '');
+                $marca = trim($_POST['marca'] ?? '');
+                $modelo = trim($_POST['modelo'] ?? '');
+                $serial = strtoupper(trim($_POST['serial'] ?? ''));
+                $estado = trim($_POST['estado'] ?? 'Buen Estado');
+                $sku = trim($_POST['sku'] ?? '');
+                $comentarios = trim($_POST['comentarios'] ?? '') ?: null;
+                $sucursal_id = !empty($_POST['sucursal_id']) ? (int) $_POST['sucursal_id'] : null;
+
+                if (empty($tipo) || empty($marca) || empty($modelo) || empty($serial)) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Tipo, Marca, Modelo y Serial son obligatorios.']);
+                    exit;
+                }
 
                 // Validate Uniqueness
-                $stmtCheck = $pdo->prepare("SELECT id FROM inventario WHERE serial = ? OR (sku != '' AND sku = ?)");
+                $stmtCheck = $pdo->prepare("SELECT id FROM inventario WHERE serial = ? OR (sku IS NOT NULL AND sku != '' AND sku = ?)");
                 $stmtCheck->execute([$serial, $sku]);
                 if ($stmtCheck->fetch()) {
                     echo json_encode(['status' => 'error', 'msg' => 'El Serial o SKU ya existe en el sistema.']);
                     exit;
                 }
 
-                $stmt = $pdo->prepare("INSERT INTO inventario (tipo, marca, modelo, serial, sku, condicion, estado, comentarios) VALUES (?, ?, ?, ?, ?, 'Disponible', ?, ?)");
-                $stmt->execute([$tipo, $marca, $modelo, $serial, $sku, $estado, $comentarios]);
+                $stmt = $pdo->prepare("INSERT INTO inventario (tipo, marca, modelo, serial, sku, condicion, estado, comentarios, sucursal_id) VALUES (?, ?, ?, ?, ?, 'Disponible', ?, ?, ?)");
+                $stmt->execute([$tipo, $marca, $modelo, $serial, $sku ?: null, $estado, $comentarios, $sucursal_id]);
 
                 if ($stmt->rowCount() > 0) {
-                    registrar_actividad("Crear Activo", "Nuevo $tipo: $marca $modelo", $pdo);
-                    echo json_encode(['status' => 'success', 'msg' => 'Activo creado correctamente']);
+                    $new_id = $pdo->lastInsertId();
+                    registrar_actividad("Crear Activo", "Nuevo $tipo: $marca $modelo (S/N: $serial)", $pdo);
+                    echo json_encode(['status' => 'success', 'msg' => 'Activo creado correctamente', 'id' => $new_id]);
                 } else {
                     echo json_encode(['status' => 'error', 'msg' => 'No se pudo guardar en base de datos']);
                 }
