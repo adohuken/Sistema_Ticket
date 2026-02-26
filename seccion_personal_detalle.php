@@ -45,6 +45,20 @@ try {
     $stmtActivos->execute([$personal_id]);
     $activos_asignados = $stmtActivos->fetchAll();
 
+    // Obtener historial de asignaciones/desasignaciones de equipos
+    $stmtAsignacionesHistorial = $pdo->prepare("
+        SELECT h.*, u.nombre_completo as usuario_nombre
+        FROM historial_actividad h
+        LEFT JOIN usuarios u ON h.usuario_id = u.id
+        WHERE h.descripcion LIKE ? OR h.descripcion LIKE ?
+        ORDER BY h.fecha DESC
+    ");
+    // Buscamos actividades relacionadas a este ID de empleado específicamente
+    $likeQuery = "%Empleado ID " . $personal_id . "%";
+    $likeQuery2 = "%Emp ID " . $personal_id . "%";
+    $stmtAsignacionesHistorial->execute([$likeQuery, $likeQuery2]);
+    $historial_asignaciones = $stmtAsignacionesHistorial->fetchAll();
+
 } catch (PDOException $e) {
     echo "<div class='p-6'><div class='bg-red-100 text-red-700 p-4 rounded'>Error: " . htmlspecialchars($e->getMessage()) . "</div></div>";
     return;
@@ -81,6 +95,15 @@ $estado_class = $estado_colors[$empleado['estado']] ?? $estado_colors['Activo'];
             </h2>
         </div>
         <div class="flex items-center gap-3">
+            <?php if ($empleado['estado'] === 'Inactivo' && !empty($empleado['ultimos_activos_devueltos'])): ?>
+                <a href="index.php?view=acta_devolucion_rapida&id=<?php echo $empleado['id']; ?>&activos=<?php echo htmlspecialchars($empleado['ultimos_activos_devueltos']); ?>"
+                    target="_blank"
+                    class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-all shadow-lg shadow-orange-600/20 flex items-center gap-2 text-sm">
+                    <i class="ri-printer-line"></i>
+                    <span>Ver Acta de Devolución</span>
+                </a>
+            <?php endif; ?>
+
             <a href="index.php?view=personal_editar&id=<?php echo $empleado['id']; ?>"
                 class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 text-sm">
                 <i class="ri-edit-line"></i>
@@ -367,6 +390,53 @@ $estado_class = $estado_colors[$empleado['estado']] ?? $estado_colors['Activo'];
                                     <div class="mt-2 text-[10px] text-slate-400 flex items-center gap-1">
                                         <i class="ri-user-line"></i> Reg. por:
                                         <?php echo htmlspecialchars($h['usuario_nombre'] ?? 'Sistema'); ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Historial de Asignaciones de Equipos -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col mt-6">
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="ri-computer-line text-blue-500"></i> Historial de Equipos
+                    </h3>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto max-h-[300px]">
+                    <?php if (empty($historial_asignaciones)): ?>
+                        <div class="text-center py-6">
+                            <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-inbox-line text-slate-300 text-xl"></i>
+                            </div>
+                            <p class="text-slate-500 text-sm">No hay registro de equipos asignados o devueltos.</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="relative border-l-2 border-slate-100 ml-3 space-y-6 pb-2">
+                            <?php foreach ($historial_asignaciones as $ha): 
+                                $isAsignacion = strpos(strtolower($ha['accion']), 'asignar') !== false;
+                                $isLiberacion = strpos(strtolower($ha['accion']), 'liberar') !== false || strpos(strtolower($ha['accion']), 'baja') !== false;
+                                
+                                $dotColor = 'bg-slate-400';
+                                if ($isAsignacion) $dotColor = 'bg-emerald-500';
+                                if ($isLiberacion) $dotColor = 'bg-orange-500';
+                            ?>
+                                <div class="ml-6 relative">
+                                    <span class="absolute -left-[31px] top-0 w-4 h-4 rounded-full border-2 border-white <?php echo $dotColor; ?>"></span>
+                                    
+                                    <div class="flex items-center justify-between mb-1">
+                                        <h4 class="text-sm font-bold text-slate-800"><?php echo htmlspecialchars($ha['accion']); ?></h4>
+                                        <span class="text-xs text-slate-400 font-mono"><?php echo date('d/m/Y H:i', strtotime($ha['fecha'])); ?></span>
+                                    </div>
+
+                                    <p class="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 mb-1">
+                                        <?php echo htmlspecialchars($ha['descripcion']); ?>
+                                    </p>
+
+                                    <div class="mt-2 text-[10px] text-slate-400 flex items-center gap-1">
+                                        <i class="ri-user-line"></i> Reg. por: <?php echo htmlspecialchars($ha['usuario_nombre'] ?? 'Sistema'); ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

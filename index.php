@@ -519,21 +519,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && iss
 
         if ($_POST['ajax_action'] === 'dar_baja_personal') {
             $emp_id = $_POST['id'];
+            $activos_liberados = [];
 
             // 1. Gestionar Activos Asignados (Auto-Revisión)
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE asignado_a = ? AND condicion = 'Asignado'");
+            $stmt = $pdo->prepare("SELECT id FROM inventario WHERE asignado_a = ? AND condicion = 'Asignado'");
             $stmt->execute([$emp_id]);
-            $assigned_count = $stmt->fetchColumn();
+            $assigned_assets = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $assigned_count = count($assigned_assets);
 
             if ($assigned_count > 0) {
+                $activos_liberados = $assigned_assets;
                 // Actualizar activos a 'En Revisión' y desasignar
                 $stmt_update = $pdo->prepare("UPDATE inventario SET condicion = 'En Revisión', asignado_a = NULL, fecha_asignacion = NULL WHERE asignado_a = ? AND condicion = 'Asignado'");
                 $stmt_update->execute([$emp_id]);
             }
 
-            // 2. Actualizar Estado del Personal
-            $stmt = $pdo->prepare("UPDATE personal SET estado = 'Inactivo', fecha_salida = CURDATE() WHERE id = ?");
-            $stmt->execute([$emp_id]);
+            // 2. Actualizar Estado del Personal y Guardar Últimos Activos (si hay)
+            $activos_csv = ($assigned_count > 0) ? implode(',', $activos_liberados) : null;
+            $stmt = $pdo->prepare("UPDATE personal SET estado = 'Inactivo', fecha_salida = CURDATE(), ultimos_activos_devueltos = ? WHERE id = ?");
+            $stmt->execute([$activos_csv, $emp_id]);
 
             $msg = "Colaborador dado de baja correctamente.";
             if ($assigned_count > 0) {
@@ -542,7 +546,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && iss
 
             registrar_actividad("Dar de Baja", "Empleado ID $emp_id desactivado. $assigned_count activos pasaron a revisión.", $pdo);
 
-            echo json_encode(['status' => 'success', 'msg' => $msg]);
+            echo json_encode(['status' => 'success', 'msg' => $msg, 'activos_liberados' => $activos_liberados]);
+        }
+
+        if ($_POST['ajax_action'] === 'reactivar_personal') {
+            $emp_id = $_POST['id'];
+
+            // Actualizar Estado del Personal (De vuelta a Activo)
+            $stmt = $pdo->prepare("UPDATE personal SET estado = 'Activo', fecha_salida = NULL, ultimos_activos_devueltos = NULL WHERE id = ?");
+            $stmt->execute([$emp_id]);
+
+            registrar_actividad("Reactivar Personal", "Empleado ID $emp_id reactivado en el sistema.", $pdo);
+
+            echo json_encode(['status' => 'success', 'msg' => 'Colaborador reactivado correctamente.']);
         }
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
@@ -2521,6 +2537,10 @@ switch ($view) {
         } else {
             echo "<div class='p-6 text-red-500'>Acceso denegado.</div>";
         }
+        break;
+
+    case 'acta_devolucion_rapida':
+        include __DIR__ . '/seccion_acta_devolucion_rapida.php';
         break;
 
     case 'restore':

@@ -505,11 +505,19 @@ $total_personal = array_sum($stats_data);
                                             title="Editar">
                                             <i class="ri-edit-line"></i>
                                         </a>
+                                        <?php if ($p['estado'] !== 'Inactivo'): ?>
                                         <button onclick="event.stopPropagation(); darDeBaja(<?php echo $p['id']; ?>, '<?php echo htmlspecialchars($p['nombres'] . ' ' . $p['apellidos'], ENT_QUOTES); ?>')"
                                             class="w-7 h-7 rounded bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition-all flex items-center justify-center"
                                             title="Dar de Baja">
                                             <i class="ri-user-unfollow-line"></i>
                                         </button>
+                                        <?php else: ?>
+                                        <button onclick="event.stopPropagation(); reactivarPersonal(<?php echo $p['id']; ?>, '<?php echo htmlspecialchars($p['nombres'] . ' ' . $p['apellidos'], ENT_QUOTES); ?>')"
+                                            class="w-7 h-7 rounded bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all flex items-center justify-center"
+                                            title="Reactivar">
+                                            <i class="ri-user-follow-line"></i>
+                                        </button>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
@@ -708,7 +716,13 @@ function ejecutarBaja(id) {
                 icon: 'success',
                 confirmButtonText: 'Aceptar'
             })
-            .then(() => location.reload()); 
+            .then(() => {
+                if (data.activos_liberados && data.activos_liberados.length > 0) {
+                    const activosParams = data.activos_liberados.join(',');
+                    window.open(`index.php?view=acta_devolucion_rapida&id=${id}&activos=${activosParams}`, '_blank');
+                }
+                location.reload(); 
+            }); 
         } else {
             Swal.fire('Error', data.msg, 'error');
         }
@@ -716,6 +730,47 @@ function ejecutarBaja(id) {
     .catch(err => {
         console.error(err);
         Swal.fire('Error', 'Error de conexión', 'error');
+    });
+}
+
+function reactivarPersonal(id, nombre) {
+    Swal.fire({
+        title: '¿Reactivar colaborador?',
+        html: `<p class="text-slate-600">El colaborador <strong>${nombre}</strong> volverá a estar <span class="text-blue-600 font-bold">Activo</span> en el sistema.</p>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3B82F6',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Sí, reactivar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append('ajax_action', 'reactivar_personal');
+            formData.append('id', id);
+
+            fetch('index.php?view=personal', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    Swal.fire({
+                        title: '¡Reactivado!',
+                        text: data.msg,
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar'
+                    }).then(() => location.reload()); 
+                } else {
+                    Swal.fire('Error', data.msg, 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Error de conexión', 'error');
+            });
+        }
     });
 }
 </script>

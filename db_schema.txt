@@ -1,0 +1,193 @@
+Tables:
+Array
+(
+    [0] => asignaciones
+    [1] => cargos
+    [2] => categorias
+    [3] => configuracion_sistema
+    [4] => empresas
+    [5] => formularios_rrhh
+    [6] => herramientas_tecnico
+    [7] => historial_actividad
+    [8] => historial_cambios
+    [9] => inventario
+    [10] => mantenimiento_equipos
+    [11] => mantenimiento_solicitudes
+    [12] => modulos
+    [13] => notificaciones
+    [14] => permisos_roles
+    [15] => permisos_usuarios
+    [16] => personal
+    [17] => personal_historial
+    [18] => registros_365
+    [19] => roles
+    [20] => sucursales
+    [21] => ticket_adjuntos
+    [22] => ticket_comentarios
+    [23] => tickets
+    [24] => usuarios
+    [25] => usuarios_accesos
+    [26] => vista_personal_completo
+)
+
+
+Columns in asignaciones:
+Array
+(
+    [0] => id
+    [1] => ticket_id
+    [2] => tecnico_id
+    [3] => asignado_por
+    [4] => fecha_asignacion
+)
+
+Columns in historial_actividad:
+Array
+(
+    [0] => id
+    [1] => usuario_id
+    [2] => accion
+    [3] => descripcion
+    [4] => fecha
+)
+
+Columns in historial_cambios:
+Array
+(
+    [0] => id
+    [1] => entidad_tipo
+    [2] => entidad_id
+    [3] => usuario_id
+    [4] => campo_modificado
+    [5] => valor_anterior
+    [6] => valor_nuevo
+    [7] => fecha_cambio
+)
+
+Columns in inventario:
+Array
+(
+    [0] => id
+    [1] => tipo
+    [2] => marca
+    [3] => modelo
+    [4] => serial
+    [5] => sku
+    [6] => procesador
+    [7] => ram
+    [8] => disco_duro
+    [9] => antivirus
+    [10] => onedrive
+    [11] => backup_status
+    [12] => screenconnect
+    [13] => sistema_operativo
+    [14] => ip_address
+    [15] => mac_address
+    [16] => anydesk_id
+    [17] => estado
+    [18] => condicion
+    [19] => sucursal_id
+    [20] => asignado_a
+    [21] => fecha_asignacion
+    [22] => fecha_compra
+    [23] => comentarios
+    [24] => fecha_registro
+)
+
+Columns in personal:
+Array
+(
+    [0] => id
+    [1] => empresa_id
+    [2] => sucursal_id
+    [3] => codigo_empleado
+    [4] => nombres
+    [5] => apellidos
+    [6] => cedula
+    [7] => fecha_nacimiento
+    [8] => genero
+    [9] => estado_civil
+    [10] => telefono
+    [11] => telefono_emergencia
+    [12] => email
+    [13] => direccion
+    [14] => ciudad
+    [15] => pais
+    [16] => cargo
+    [17] => departamento
+    [18] => fecha_ingreso
+    [19] => fecha_salida
+    [20] => tipo_contrato
+    [21] => salario
+    [22] => usuario_sistema_id
+    [23] => estado
+    [24] => foto_url
+    [25] => notas
+    [26] => creado_por
+    [27] => fecha_creacion
+    [28] => modificado_por
+    [29] => fecha_modificacion
+)
+
+Columns in personal_historial:
+Array
+(
+    [0] => id
+    [1] => personal_id
+    [2] => tipo_cambio
+    [3] => descripcion
+    [4] => empresa_anterior_id
+    [5] => sucursal_anterior_id
+    [6] => cargo_anterior
+    [7] => salario_anterior
+    [8] => empresa_nueva_id
+    [9] => sucursal_nueva_id
+    [10] => cargo_nuevo
+    [11] => salario_nuevo
+    [12] => fecha_efectiva
+    [13] => registrado_por
+    [14] => fecha_registro
+)
+
+Columns in vista_personal_completo:
+Array
+(
+    [0] => id
+    [1] => empresa_id
+    [2] => sucursal_id
+    [3] => codigo_empleado
+    [4] => nombres
+    [5] => apellidos
+    [6] => cedula
+    [7] => fecha_nacimiento
+    [8] => genero
+    [9] => estado_civil
+    [10] => telefono
+    [11] => telefono_emergencia
+    [12] => email
+    [13] => direccion
+    [14] => ciudad
+    [15] => pais
+    [16] => cargo
+    [17] => departamento
+    [18] => fecha_ingreso
+    [19] => fecha_salida
+    [20] => tipo_contrato
+    [21] => salario
+    [22] => usuario_sistema_id
+    [23] => estado
+    [24] => foto_url
+    [25] => notas
+    [26] => creado_por
+    [27] => fecha_creacion
+    [28] => modificado_por
+    [29] => fecha_modificacion
+    [30] => empresa_nombre
+    [31] => empresa_codigo
+    [32] => sucursal_nombre
+    [33] => sucursal_codigo
+    [34] => sucursal_ciudad
+    [35] => sucursal_pais
+    [36] => usuario_sistema_nombre
+    [37] => anos_servicio
+)
